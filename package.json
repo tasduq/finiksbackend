@@ -21,5 +21,8 @@
     "nodemailer": "^6.7.5",
     "nodemon": "^2.0.16",
     "otp-generator": "^4.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.16"
   }
 }
