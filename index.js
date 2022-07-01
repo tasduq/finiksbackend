@@ -1,3 +1,14 @@
+require("./Models/Aristotledata");
+require("./Models/Campaign");
+require("./Models/Campaignsurveys");
+require("./Models/Canvassinglist");
+require("./Models/Finiksdata");
+require("./Models/Phonebanklists");
+require("./Models/Script");
+require("./Models/Survey");
+require("./Models/Tag");
+require("./Models/Teammember");
+
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
