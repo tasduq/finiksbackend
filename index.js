@@ -2,7 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 
-const aristotleRoutes = require("./Routes/Aristotle-routes");
+// const aristotleRoutes = require("./Routes/Aristotle-routes");
 const finiksRoutes = require("./Routes/Finiks-routes");
 const phonebankRoutes = require("./Routes/Phonebank-routes");
 const canvassingRoutes = require("./Routes/Canvassing-routes");
@@ -51,7 +51,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/api/aristotle", aristotleRoutes);
+// app.use("/api/aristotle", aristotleRoutes);
 app.use("/api/finiks", finiksRoutes);
 app.use("/api/phonebank", phonebankRoutes);
 app.use("/api/canvassing", canvassingRoutes);
