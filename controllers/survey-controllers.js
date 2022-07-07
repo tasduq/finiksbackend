@@ -49,6 +49,46 @@ const addSurvey = async (req, res) => {
   }
 };
 
+const getCampaignSurveyResponses = async (req, res) => {
+  const { campaignOwnerId, surveyId } = req.body;
+
+  const voters = await Voter.find(
+    {
+      "surveys.campaignId": campaignOwnerId,
+    },
+    "surveys"
+  );
+  console.log(voters.length);
+
+  const campaignSurvey = voters.map((voter) => {
+    let foundCampaignSurvey = voter.surveys.find(
+      (survey) => survey.campaignId === campaignOwnerId
+    );
+
+    console.log(foundCampaignSurvey, "hello");
+
+    let foundSurveyResponses = foundCampaignSurvey.surveyAnswers.find(
+      (surveyAnswer) => surveyAnswer.surveyId === surveyId
+    );
+
+    return foundSurveyResponses;
+  });
+  console.log(campaignSurvey, "campaign surveys");
+
+  if (campaignSurvey) {
+    res.json({
+      success: true,
+      message: "Surveys Found",
+      foundSurveys: campaignSurvey,
+    });
+  } else {
+    res.json({
+      success: false,
+      message: "Surveys Not Found",
+    });
+  }
+};
+
 const connectSurveyToUser = async (req, res) => {
   const {
     campaignId,
@@ -153,11 +193,12 @@ const connectSurveyToUser = async (req, res) => {
           let campaignFound = await Voter.findOne({ _id: voterId }, "surveys");
           console.log(campaignFound, "Voter found surveys");
 
+          campaignFound = campaignFound.surveys.find(
+            (campaign) => campaign.campaignId === campaignId
+          );
+          console.log(campaignFound, "campaign found from voter surveys");
+
           if (campaignFound) {
-            campaignFound = campaignFound.surveys.find(
-              (campaign) => campaign.campaignId === campaignId
-            );
-            console.log(campaignFound, "campaign found from voter surveys");
             console.log(voterAnswers);
             Voter.updateOne(
               { _id: voterId, "surveys.campaignId": campaignId },
@@ -280,10 +321,32 @@ const getCampaignsSurveys = async (req, res) => {
   }
 };
 
+const getClientSurvey = async (req, res) => {
+  const campaignsSurveys = await Campaignsurvey.findOne({
+    campaignOwnerId: req.body.id,
+  });
+  console.log(campaignsSurveys);
+
+  if (campaignsSurveys) {
+    res.json({
+      success: true,
+      clientData: campaignsSurveys,
+      message: "Campaign Surveys Found",
+    });
+  } else {
+    res.json({
+      success: false,
+      message: "Campaign Surveys Not Found",
+    });
+  }
+};
+
 module.exports = {
   addSurvey,
   connectSurveyToUser,
   getCampaignsSurveys,
+  getClientSurvey,
+  getCampaignSurveyResponses,
 };
 
 // const {

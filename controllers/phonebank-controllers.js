@@ -484,6 +484,28 @@ const getLists = async (req, res) => {
   }
 };
 
+const getListsForPhonebanking = async (req, res) => {
+  const { campaignId } = req.body;
+  console.log(req.body);
+
+  const phonebankLists = await List.find({ campaignOwnerId: campaignId });
+
+  let reverse = phonebankLists.map((item) => item).reverse();
+
+  if (phonebankLists) {
+    res.json({
+      success: true,
+      phonebankLists: reverse,
+      message: "Lists Found for phonebanking",
+    });
+  } else {
+    res.json({
+      success: false,
+      message: "Lists Not Found for phonebanking",
+    });
+  }
+};
+
 const updateList = async (req, res) => {
   console.log(req.body);
   const { selectedList, selectedScript } = req.body;
@@ -615,4 +637,5 @@ module.exports = {
   updateList,
   deleteList,
   editList,
+  getListsForPhonebanking,
 };

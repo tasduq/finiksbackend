@@ -121,6 +121,26 @@ const getTags = async (req, res) => {
   }
 };
 
+const getClientTags = async (req, res) => {
+  const campaignsTags = await Tag.find({
+    campaignOwnerId: req.body.id,
+  });
+  console.log(campaignsTags);
+
+  if (campaignsTags) {
+    res.json({
+      success: true,
+      clientData: campaignsTags,
+      message: "Campaign Tags Found",
+    });
+  } else {
+    res.json({
+      success: false,
+      message: "Campaign Tags Not Found",
+    });
+  }
+};
+
 const getTagInfo = async (req, res) => {
   const { tagId } = req.body;
   console.log(req.body);
@@ -642,6 +662,40 @@ const mergeTags = async (req, res) => {
   }
 };
 
+const deleteTag = async (req, res) => {
+  console.log(req.body);
+
+  try {
+    ad = await Tag.findByIdAndRemove({ _id: req.body.id });
+    console.log(ad);
+    ad = true;
+    // console.log(res);
+    console.log("done");
+  } catch (err) {
+    console.log(err, "hello");
+    res.json({
+      success: false,
+      message: "Error deleting Tag",
+    });
+    return;
+  }
+
+  if (ad) {
+    res.json({
+      success: true,
+
+      message: "Tag deleted",
+    });
+  } else {
+    res.json({
+      success: false,
+
+      message: "Error deleting Tag",
+    });
+    return;
+  }
+};
+
 module.exports = {
   addTag,
   getTags,
@@ -650,4 +704,6 @@ module.exports = {
   getTagsByClients,
   mergeTags,
   editTag,
+  getClientTags,
+  deleteTag,
 };

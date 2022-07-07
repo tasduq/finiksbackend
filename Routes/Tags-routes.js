@@ -7,10 +7,12 @@ const router = express.Router();
 router.post("/addTag", tagsController.addTag);
 router.post("/edittag", tagsController.editTag);
 router.get("/gettags", tagsController.getTags);
+router.post("/getclienttags", tagsController.getClientTags);
 router.post("/gettaginfo", tagsController.getTagInfo);
 router.post("/connecttagtouser", tagsController.connectTagToUser);
 router.get("/gettagsbyclients", tagsController.getTagsByClients);
 router.post("/mergetags", tagsController.mergeTags);
+router.post("/deletetag", tagsController.deleteTag);
 
 // router.post("/deletescripts", tagsController.deleteScripts);
 // router.post("/editscripts", tagsController.editScripts);

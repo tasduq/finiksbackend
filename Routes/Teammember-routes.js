@@ -8,6 +8,7 @@ router.post("/registerteammember", teammemberController.register);
 router.post("/loginteammember", teammemberController.login);
 router.post("/inviteteammember", teammemberController.sendInvite);
 router.post("/joincampaign", teammemberController.joinCampaign);
+// router.post("/getcampaigns", teammemberController.getCampaigns);
 // router.post("/updatecampaigndata", campaignController.updateCampaignData);
 // router.post("/getcampaigndata", campaignController.getCampaignData);
 // router.get("/getnewcode", campaignController.getNewCode);

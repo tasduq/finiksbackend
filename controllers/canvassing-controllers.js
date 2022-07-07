@@ -279,6 +279,29 @@ const getLists = async (req, res) => {
   }
 };
 
+const getListsForCanvassing = async (req, res) => {
+  const { campaignId } = req.body;
+  console.log(req.body);
+
+  const CanvassingLists = await List.find({ campaignOwnerId: campaignId });
+
+  let reverse = CanvassingLists.map((item) => item).reverse();
+  console.log(reverse, "yooo");
+
+  if (CanvassingLists) {
+    res.json({
+      success: true,
+      canvassingLists: reverse,
+      message: "Lists Found for Canvassing",
+    });
+  } else {
+    res.json({
+      success: false,
+      message: "Lists Not Found for Canvassing",
+    });
+  }
+};
+
 const updateList = async (req, res) => {
   console.log(req.body);
   const { selectedList, selectedScript } = req.body;
@@ -411,4 +434,5 @@ module.exports = {
   updateList,
   deleteList,
   editList,
+  getListsForCanvassing,
 };

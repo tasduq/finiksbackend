@@ -29,6 +29,7 @@ const editClient = async (req, res) => {
     level,
     district,
     id,
+    active,
   } = req.body;
 
   try {
@@ -45,6 +46,7 @@ const editClient = async (req, res) => {
           state,
           level,
           district,
+          active,
         },
       },
       function (err) {
@@ -76,7 +78,42 @@ const editClient = async (req, res) => {
   }
 };
 
+const deleteClient = async (req, res) => {
+  console.log(req.body);
+
+  try {
+    ad = await Campaign.findByIdAndRemove({ _id: req.body.id });
+    console.log(ad);
+    ad = true;
+    // console.log(res);
+    console.log("done");
+  } catch (err) {
+    console.log(err, "hello");
+    res.json({
+      success: false,
+      message: "Error deleting Client",
+    });
+    return;
+  }
+
+  if (ad) {
+    res.json({
+      success: true,
+
+      message: "Client deleted",
+    });
+  } else {
+    res.json({
+      success: false,
+
+      message: "Error deleting Client",
+    });
+    return;
+  }
+};
+
 module.exports = {
   getClients,
   editClient,
+  deleteClient,
 };
