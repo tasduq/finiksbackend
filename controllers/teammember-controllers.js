@@ -202,6 +202,8 @@ const sendInvite = async (req, res) => {
     email,
     campaignCode,
     campaignName,
+    heading: "Campaign Joining Code",
+    message: "We are inviting you for joining our campaign",
   });
 
   // const campaignFound = await Campaign.findOne({_id : campaignId})
@@ -286,6 +288,10 @@ const joinCampaign = async (req, res) => {
                 ...invitedMember,
                 dateJoined: new Date(),
                 votersInfluenced: 0,
+                doorsKnocked: 0,
+                votersSurveyed: 0,
+                votersMessaged: 0,
+                phonesCalled: 0,
               },
             },
           },

@@ -8,7 +8,8 @@ router.post("/addsurvey", surveyController.addSurvey);
 router.post("/getclientsurvey", surveyController.getClientSurvey);
 router.post("/takesurvey", surveyController.connectSurveyToUser);
 
-router.get("/getcampaignssurveys", surveyController.getCampaignsSurveys);
+router.get("/getcampaigns", surveyController.getCampaigns);
+router.post("/getcampaignsurveys", surveyController.getCampaignSurveys);
 router.post(
   "/getcampaignsurveyresponses",
   surveyController.getCampaignSurveyResponses

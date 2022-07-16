@@ -10,5 +10,9 @@ router.post("/updatecampaigndata", campaignController.updateCampaignData);
 router.post("/getcampaigndata", campaignController.getCampaignData);
 router.get("/getnewcode", campaignController.getNewCode);
 router.post("/getteammembers", campaignController.getTeamMembers);
+router.post(
+  "/getcampaignteammembers",
+  campaignController.getCampaignTeammembers
+);
 
 module.exports = router;

@@ -8,5 +8,6 @@ const router = express.Router();
 router.get("/getclients", clientsController.getClients);
 router.post("/editclient", clientsController.editClient);
 router.post("/deleteclient", clientsController.deleteClient);
+router.post("/getdistricts", clientsController.getDistricts);
 
 module.exports = router;

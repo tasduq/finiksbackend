@@ -13,7 +13,7 @@ const campaignSchema = new Schema({
 
   state: { type: String },
   level: { type: String },
-  district: { type: String },
+  district: { type: Array },
   active: { type: Boolean, default: true },
   role: { type: String },
   campaignDates: { type: Object },
@@ -21,6 +21,9 @@ const campaignSchema = new Schema({
   campaignCode: { type: String },
   teamMembers: { type: Array },
   invitedTeamMembers: { type: Array },
+  county: { type: Array },
+  countyCommission: { type: Array },
+  city: { type: Array },
 });
 
 module.exports = mongoose.model("Campaign", campaignSchema);

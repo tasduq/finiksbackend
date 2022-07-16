@@ -9,7 +9,7 @@ const getAristotledata = async (req, res) => {
   const data = await Aristotle.find({})
     .sort({ _id: 1 })
     .skip(bottomHit > 0 ? (bottomHit - 1) * 100 : 0)
-    .limit(100);
+    .limit(10);
 
   if (data) {
     console.log("data found", data.length);
@@ -141,33 +141,51 @@ const addAristotleData = async (req, res) => {
     },
   });
 
-  console.log(result);
+  // console.log(result);
   let saveVoter = [...result.Sheet1];
   saveVoter.splice(0, 1);
-  console.log(saveVoter);
-  Aristotle.collection.insertMany(saveVoter, function (err, docs) {
-    if (err) {
-      console.log(err);
-      res.json({ success: false, message: "Error in saving Data" });
-      return;
-    } else {
-      console.log("Multiple documents inserted to Aristotle Collection");
-      Finiks.collection.insertMany(saveVoter, (err, docs) => {
+  // console.log(saveVoter);
+  // filter = { 'API_ID'}
+  saveVoter.map(async (voter) => {
+    Aristotle.collection.updateOne(
+      { API_ID: voter.API_ID },
+      { $set: { ...voter } },
+      { upsert: true },
+      async function (err, docs) {
         if (err) {
           console.log(err);
           res.json({ success: false, message: "Error in saving Data" });
           return;
         } else {
-          res.json({
-            success: true,
-            message: "Aristotle Data and Finiks Data Saved",
-          });
-          return;
-        }
-      });
+          console.log("Multiple documents inserted to Aristotle Collection");
+          await Finiks.collection.updateOne(
+            { API_ID: voter.API_ID },
+            { $set: { ...voter } },
+            { upsert: true }
+            // (err, docs) => {
+            //   if (err) {
+            //     console.log(err, "i am error");
+            //     res.json({ success: false, message: "Error in saving Data" });
+            //     return;
+            //   } else {
+            //     return res.json({
+            //       success: true,
+            //       message: "Aristotle Data and Finiks Data Saved",
+            //     });
+            //   }
+            // }
+          );
 
-      return;
-    }
+          if (!res.headersSent) {
+            res.json({
+              success: true,
+              message: "Aristotle Data and Finiks Data Saved",
+            });
+            return;
+          }
+        }
+      }
+    );
   });
 };
 

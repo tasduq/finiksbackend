@@ -8,11 +8,11 @@ const sendEmail = (data) => {
               
               <h3>${data.campaignName}</h3>
               <p>${data.firstName}</p>
-              <p>We are Inviting Your for Our Campaign</p>
+              <p>${data.message}</p>
               <ul>  
                 <li>Registered for: ${data.email}</li>
               </ul>
-              <h3>Campaign Joining Code</h3>
+              <h3>${data.heading}</h3>
               <p>${data.campaignCode}</p>
               `;
 

@@ -2,6 +2,7 @@ const Campaign = require("../Models/Campaign");
 const Team = require("../Models/Teammember");
 const bcrypt = require("bcryptjs");
 var otpGenerator = require("otp-generator");
+var sendEmail = require("../Utils/Sendemail");
 
 const jwt = require("jsonwebtoken");
 
@@ -17,6 +18,9 @@ const register = async (req, res, next) => {
     level,
     district,
     role,
+    county,
+    countyCommission,
+    city,
   } = req.body;
   console.log(req.body);
 
@@ -74,6 +78,9 @@ const register = async (req, res, next) => {
       district,
       role,
       campaignCode,
+      county,
+      countyCommission,
+      city,
     });
 
     try {
@@ -87,6 +94,15 @@ const register = async (req, res, next) => {
           });
           return;
         } else {
+          sendEmail.sendEmail({
+            firstName: "",
+            lastName: "",
+            email: email,
+            campaignCode: "Your Campaign Got Registered at Finiks Platform",
+            campaignName: campaignName,
+            heading: "Campaign Joining",
+            message: "We Have Registered Your Campaign at Finiks Platform",
+          });
           res.json({
             message: "Campaign Registered",
             success: true,
@@ -291,20 +307,29 @@ const getTeamMembers = async (req, res) => {
   console.log(teamMembersEmails, "Emails");
 
   const foundTeam = await Team.find({ email: teamMembersEmails }, "-password");
-  console.log(foundTeam);
+  console.log(foundTeam, "found Team");
 
   const finalTeams = foundTeam.map((member) => {
-    let matchedMember = teamMembers.find(
-      (memberObject) => memberObject.email === member.email
+    // let matchedMember = teamMembers.find(
+    //   (memberObject) => memberObject.email === member.email
+    // );
+    // console.log(matchedMember, member, "i a matched");
+
+    let campaign = member.campaignJoined.find(
+      (campaign) => campaign.campaignId.toString() === campaignId
     );
-    console.log(matchedMember, member, "i a matched");
-    if (matchedMember) {
+    if (campaign) {
       return {
         memberName: `${member.firstName} ${member.lastName}`,
-        permission: matchedMember.permission,
-        email: member.email,
-        phoneNumber: member.phoneNumber,
-        dateJoined: matchedMember.dateJoined.toString().split("G")[0],
+        permission: member?.permission,
+        email: member?.email,
+        phoneNumber: member?.phoneNumber,
+        dateJoined: member?.dateJoined?.toString().split("G")[0],
+        votersInfluenced: campaign?.votersInfluenced,
+        doorsKnocked: campaign?.doorsKnocked,
+        votersSurveyed: campaign?.votersSurveyed,
+        votersMessaged: campaign?.votersMessaged,
+        phonesCalled: campaign?.phonesCalled,
       };
     }
   });
@@ -325,6 +350,40 @@ const getTeamMembers = async (req, res) => {
   }
 };
 
+const getCampaignTeammembers = async (req, res) => {
+  console.log(req.body);
+
+  let foundTeammembers = await Team.find({ email: { $in: req.body.emails } });
+  console.log(foundTeammembers);
+
+  if (foundTeammembers) {
+    if (foundTeammembers?.length > 0) {
+      foundTeammembers = foundTeammembers.map((member) => {
+        let campaignData = member.campaignJoined.find(
+          (campaign) =>
+            campaign.campaignId.toString() === req.body.campaignId.toString()
+        );
+        return {
+          email: member.email,
+          memberName: `${member.firstName} ${member.lastName}`,
+          phoneNumber: member.phoneNumber,
+          ...campaignData,
+        };
+      });
+    }
+
+    console.log(foundTeammembers, "yooo team");
+
+    res.json({
+      success: true,
+      message: "Team members found",
+      foundTeammembers,
+    });
+  } else {
+    res.json({ success: false, message: "Team members not found" });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -332,4 +391,5 @@ module.exports = {
   getNewCode,
   getCampaignData,
   getTeamMembers,
+  getCampaignTeammembers,
 };

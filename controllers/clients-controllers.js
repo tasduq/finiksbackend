@@ -1,4 +1,5 @@
 const Campaign = require("../Models/Campaign");
+const Aristotle = require("../Models/Aristotledata");
 
 const getClients = async (req, res) => {
   const allClients = await Campaign.find({}, "-password");
@@ -30,6 +31,9 @@ const editClient = async (req, res) => {
     district,
     id,
     active,
+    city,
+    county,
+    countyCommission,
   } = req.body;
 
   try {
@@ -47,6 +51,9 @@ const editClient = async (req, res) => {
           level,
           district,
           active,
+          city,
+          county,
+          countyCommission,
         },
       },
       function (err) {
@@ -112,8 +119,24 @@ const deleteClient = async (req, res) => {
   }
 };
 
+const getDistricts = async (req, res) => {
+  console.log(req.body);
+
+  const data = await Aristotle.distinct(req.body.field, {
+    [req.body.fieldTwoName ? req.body.fieldTwoName : "STATE"]: req.body.state,
+  });
+  console.log(data);
+
+  if (data) {
+    res.json({ success: true, message: "Districts found", districts: data });
+  } else {
+    res.json({ success: false, message: "Districts not found" });
+  }
+};
+
 module.exports = {
   getClients,
   editClient,
   deleteClient,
+  getDistricts,
 };

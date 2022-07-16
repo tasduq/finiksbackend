@@ -9,7 +9,7 @@ const getFiniksdata = async (req, res) => {
   const data = await Finiks.find({})
     .sort({ _id: 1 })
     .skip(bottomHit > 0 ? (bottomHit - 1) * 100 : 0)
-    .limit(100);
+    .limit(10);
 
   if (data) {
     res.json({

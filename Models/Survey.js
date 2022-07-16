@@ -4,15 +4,13 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const surveySchema = new Schema({
-  surveyName: { type: String, required: true },
-  surveyPreview: { type: String, required: true },
-  active: { type: Boolean, default: true },
-  surveyQuestion: {
-    type: String,
+  campaignName: { type: String, required: true },
+  campaignOwnerId: {
+    type: Schema.Types.ObjectId,
+    ref: "Campaign",
     required: true,
   },
-  color: { type: Object },
-  surveyAnswer: { type: Array },
+  surveyQuestions: { type: Array },
 });
 
 module.exports = mongoose.model("Survey", surveySchema);
