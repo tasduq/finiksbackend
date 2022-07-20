@@ -122,6 +122,7 @@ const getTags = async (req, res) => {
 };
 
 const getClientTags = async (req, res) => {
+  console.log(req.body);
   const campaignsTags = await Tag.find({
     campaignOwnerId: req.body.id,
   });
@@ -166,91 +167,121 @@ const getTagInfo = async (req, res) => {
 };
 
 const connectTagToUser = async (req, res) => {
-  const {
-    tagId,
+  console.log(req.body);
+  let {
+    tags,
+    selectedVoters,
     campaignId,
     campaignName,
     subUserName,
     subUserId,
-    voterId,
-    voterName,
-    recordType,
-    geoLocation,
-    date,
-    time,
   } = req.body;
 
   try {
-    let foundTag = await Tag.findOne({ _id: tagId });
+    // let foundTag = await Tag.findOne({ _id: tagId });
+    selectedVoters = selectedVoters.map((voter) => {
+      return {
+        voterId: voter.voterId,
+        voterName: voter.voterName,
+        campaignId,
+        campaignName,
+        subUserName,
+        subUserId,
+        recordType:
+          subUserId === "superadmin"
+            ? "Tagged by superadmin"
+            : "Tagged By campaign manager",
+        geoLocation: "",
+        time: new Date(),
+        date: new Date(),
+      };
+    });
 
-    let ad = Tag.updateOne(
-      { _id: tagId },
+    let selectedTags = selectedVoters.map((voter) => {
+      let yoo = tags.map((tag) => {
+        return {
+          ...tag,
+          voterId: voter.voterId,
+          voterName: voter.voterName,
+          campaignId,
+          campaignName,
+          subUserName,
+          subUserId,
+        };
+      });
+      return yoo;
+    });
 
-      {
-        $push: {
-          users: {
-            campaignId,
-            campaignName,
-            subUserName,
-            subUserId,
-            voterId,
-            voterName,
-            recordType,
-            geoLocation,
-            date,
-            time,
+    console.log(selectedTags, selectedVoters, "heloooooooo");
+
+    tags.map((tag, i) => {
+      let ad = Tag.updateOne(
+        { _id: tag.tagId },
+
+        {
+          $push: {
+            users: { $each: selectedVoters },
           },
         },
-      },
-      function (err, updatedTag) {
-        console.log(err);
-        if (err) {
-          res.json({
-            success: false,
-            message: "Something went wrong",
-          });
-          return;
-        } else {
-          console.log(updatedTag);
-          Voter.updateOne(
-            { _id: voterId },
-            {
-              $push: {
-                voterTags: {
-                  campaignId,
-                  campaignName,
-                  subUserName,
-                  subUserId,
-                  voterId,
-                  voterName,
-                  recordType,
-                  geoLocation,
-                  date,
-                  time,
-                  tagId: foundTag._id,
-                  tagName: foundTag.tagName,
-                },
-              },
-            },
-            (err) => {
-              if (err) {
-                res.json({
-                  success: false,
-                  message: "Something went wrong",
+        function (err, updatedTag) {
+          console.log(err);
+          if (err) {
+            res.json({
+              success: false,
+              message: "Something went wrong",
+            });
+            return;
+          } else {
+            // console.log(updatedTag);
+            if (i === tags.length - 1) {
+              console.log("I am hereeeeeee");
+              selectedTags.map((voter, i) => {
+                voter.map((voterTags, j) => {
+                  Voter.updateOne(
+                    { _id: voterTags.voterId },
+                    {
+                      $push: {
+                        voterTags: {
+                          campaignId,
+                          campaignName,
+                          subUserName,
+                          subUserId,
+                          voterId: voterTags.voterId,
+                          date: new Date(),
+                          time: new Date(),
+                          tagId: voter.tagId,
+                          tagName: voter.tagName,
+                        },
+                      },
+                    },
+                    (err) => {
+                      if (err) {
+                        res.json({
+                          success: false,
+                          message: "Something went wrong",
+                        });
+                        return;
+                      } else {
+                        if (
+                          i === selectedTags.length - 1 &&
+                          j === voter.length - 1
+                        ) {
+                          res.json({
+                            success: true,
+                            message: "Tag Updated",
+                          });
+                          return;
+                        }
+                      }
+                    }
+                  );
                 });
-                return;
-              } else {
-                res.json({
-                  success: true,
-                  message: "Tag Updated",
-                });
-                return;
-              }
+              });
             }
-          );
+          }
         }
-      }
-    );
+      );
+    });
 
     console.log("done");
   } catch (err) {

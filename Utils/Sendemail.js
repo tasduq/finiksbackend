@@ -6,14 +6,14 @@ const sendEmail = (data) => {
     console.log("Things going good");
     const output = `
               
-              <h3>${data.campaignName}</h3>
-              <p>${data.firstName}</p>
-              <p>${data.message}</p>
+              <h3>${data?.campaignName}</h3>
+              <p>${data?.firstName}</p>
+              <p>${data?.message}</p>
               <ul>  
-                <li>Registered for: ${data.email}</li>
+                <li>Registered for: ${data?.email}</li>
               </ul>
-              <h3>${data.heading}</h3>
-              <p>${data.campaignCode}</p>
+              <h3>${data?.heading}</h3>
+              <p>${data?.campaignCode}</p>
               `;
 
     // create reusable transporter object using the default SMTP transport

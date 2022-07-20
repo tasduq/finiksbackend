@@ -59,11 +59,11 @@ const register = async (req, res, next) => {
       return;
     }
 
-    //   let campaignCode = otpGenerator.generate(6, {
-    //     upperCase: true,
-    //     specialChars: true,
-    //     alphabets: true,
-    //   });
+    let otp = otpGenerator.generate(6, {
+      upperCase: true,
+      specialChars: true,
+      alphabets: true,
+    });
 
     const createdTeammember = new Teammember({
       firstName,
@@ -72,6 +72,7 @@ const register = async (req, res, next) => {
       password: hashedPassword,
       address,
       phoneNumber,
+      emailVerificationCode: otp,
     });
 
     try {
@@ -85,6 +86,16 @@ const register = async (req, res, next) => {
           });
           return;
         } else {
+          sendEmail.sendEmail({
+            firstName,
+            lastName,
+            email: email,
+            campaignCode: otp,
+            campaignName: "",
+            heading: "OTP Verification Code",
+            message:
+              "Kindly Verify Your email for getting registered to the Platform",
+          });
           res.json({
             message: "Teammember Registered",
             success: true,
@@ -102,6 +113,86 @@ const register = async (req, res, next) => {
     }
   } else {
     res.json({ message: "Please Enter all the Details", success: false });
+  }
+};
+
+const emailVerify = async (req, res) => {
+  const { otp, email } = req.body;
+  let user;
+
+  try {
+    user = await Teammember.findOne({ email: email }, "-password");
+    console.log(user);
+    if (user) {
+      if (user.emailVerificationCode === otp) {
+        Teammember.updateOne(
+          { email: email },
+          { $set: { emailVerified: true } },
+          function (err) {
+            if (!err) {
+              return res.json({
+                success: true,
+                message: "Email Verified",
+              });
+            }
+          }
+        );
+      } else {
+        res.json({ success: false, message: "Otp Wrong" });
+        return;
+      }
+    }
+  } catch (err) {
+    return res.json({ success: false, message: "Somthing went wrong" });
+  }
+};
+
+const requestNewEmailOtp = async (req, res) => {
+  console.log(req.body);
+  const { email } = req.body;
+
+  let user = await Teammember.findOne({ email: email }, "-password");
+  if (user) {
+    let otp = otpGenerator.generate(6, {
+      upperCase: true,
+      specialChars: true,
+      alphabets: true,
+    });
+
+    Teammember.updateOne(
+      { email: email },
+      { $set: { emailVerificationCode: otp } },
+      function (err) {
+        if (!err) {
+          console.log("Otp Email Updated");
+          sendEmail.sendEmail({
+            // firstName,
+            // lastName,
+            email: email,
+            campaignCode: otp,
+            // campaignName: "",
+            heading: "OTP Verification Code",
+            message:
+              "Kindly Verify Your email for getting registered to the Platform",
+          });
+          return res.json({
+            success: true,
+            message: "New OTP Sent to your email",
+          });
+        } else {
+          res.json({
+            success: false,
+            message: "Something went wrong",
+          });
+          return;
+        }
+      }
+    );
+  } else {
+    res.json({
+      success: false,
+      message: "User Email not exist",
+    });
   }
 };
 
@@ -363,4 +454,6 @@ module.exports = {
   login,
   sendInvite,
   joinCampaign,
+  emailVerify,
+  requestNewEmailOtp,
 };
