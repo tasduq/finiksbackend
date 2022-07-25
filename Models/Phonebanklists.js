@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const phonebanklistSchema = new Schema({
-  listName: { type: String, required: true },
+  recordName: { type: String, required: true },
   totalNumbers: { type: Number, required: true },
   totalCalled: { type: Number, defaultValue: 0 },
   numbersLeft: { type: Number, defaultValue: 0 },
@@ -17,14 +17,20 @@ const phonebanklistSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Campaign",
   },
-  voters: { type: Array, required: true },
-  phoneBankerId: {
+  // voters: { type: Array },
+  // phoneBankerId: {
+  //   type: Schema.Types.ObjectId,
+  //   ref: "User",
+  // },
+  // phoneBankerName: {
+  //   type: String,
+  // },
+  teamMembers: { type: Array },
+  list: {
     type: Schema.Types.ObjectId,
-    ref: "User",
+    ref: "List",
   },
-  phoneBankerName: {
-    type: String,
-  },
+  active: { type: String, default: "Active" },
 });
 
 module.exports = mongoose.model("Phonebanklist", phonebanklistSchema);

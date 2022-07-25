@@ -1,5 +1,8 @@
 const Aristotle = require("../Models/Aristotledata");
 const List = require("../Models/Canvassinglist");
+const List2 = require("../Models/List");
+const Campaign = require("../Models/Campaign");
+const Team = require("../Models/Teammember");
 
 const queryCanvassing = async (req, res) => {
   console.log(req.body);
@@ -210,6 +213,155 @@ const queryCanvassing = async (req, res) => {
       success: false,
       message: "Voters Not Found According to the Filters",
     });
+  }
+};
+
+const saveRecord = async (req, res, next) => {
+  console.log(req.body, "hello i am body");
+  const {
+    recordName,
+    campaignOwnerId,
+    selectedList,
+    selectedScript,
+    walkbooks,
+  } = req.body;
+
+  let listTotalNumbers = await List2.findOne(
+    { _id: selectedList },
+    "totalNumbers"
+  );
+  console.log(listTotalNumbers);
+
+  const createdList = new List({
+    recordName,
+    totalNumbers: listTotalNumbers?.totalNumbers,
+    campaignOwnerId,
+    list: selectedList,
+    scriptName: selectedScript.scriptName,
+    scriptId: selectedScript._id,
+    created: new Date(),
+    walkBooks: walkbooks,
+  });
+
+  try {
+    createdList.save((err) => {
+      if (err) {
+        console.log(err);
+        res.json({
+          success: false,
+          data: err,
+          message: "Creating Record Failed",
+        });
+        return;
+      } else {
+        res.json({
+          message: "Record Saved ",
+          success: true,
+        });
+      }
+    });
+  } catch (err) {
+    console.log(err);
+    res.json({
+      success: false,
+      data: err,
+      message: "Creating Record Faile. Trying again latter",
+    });
+  }
+};
+
+const getRecords = async (req, res) => {
+  const { campaignId } = req.body;
+  console.log(req.body);
+
+  const phonebankLists = await List.find({ campaignOwnerId: campaignId });
+
+  let reverse = phonebankLists.map((item) => item).reverse();
+
+  if (phonebankLists) {
+    res.json({
+      success: true,
+      canvassingLists: reverse,
+      message: "Records Found for Canvassing",
+    });
+  } else {
+    res.json({
+      success: false,
+      message: "Records Not Found for Canvassing",
+    });
+  }
+};
+
+const updateRecord = async (req, res) => {
+  console.log(req.body, "i am body");
+  const {
+    recordName,
+    campaignOwnerId,
+    selectedList,
+    selectedScript,
+    recordId,
+    active,
+    walkbooks,
+  } = req.body;
+
+  let listTotalNumbers = await List2.findOne(
+    { _id: selectedList },
+    "totalNumbers"
+  );
+  console.log(listTotalNumbers, "i am totalNumbers");
+
+  if (recordId) {
+    try {
+      // ad = await Ad.findOne({ _id: id });
+
+      let ad = List.updateOne(
+        { _id: recordId },
+
+        {
+          $set: {
+            recordName,
+            campaignOwnerId,
+            totalNumbers: listTotalNumbers?.totalNumbers,
+            list: selectedList,
+            scriptName: selectedScript.scriptName,
+            scriptId: selectedScript._id,
+            active,
+            walkBooks: walkbooks,
+          },
+        },
+        function (err) {
+          console.log(err);
+          if (err) {
+            res.json({
+              success: false,
+              message: "Something went wrong",
+            });
+            return;
+          } else {
+            res.json({
+              success: true,
+              message: "Record Updated",
+            });
+            return;
+          }
+        }
+      );
+
+      console.log("done");
+    } catch (err) {
+      console.log(err);
+      res.json({
+        success: false,
+        message: "Something went wrong",
+      });
+      return;
+    }
+  } else {
+    res.json({
+      success: false,
+      message: "Record Id not found",
+    });
+    return;
   }
 };
 
@@ -435,4 +587,7 @@ module.exports = {
   deleteList,
   editList,
   getListsForCanvassing,
+  saveRecord,
+  getRecords,
+  updateRecord,
 };

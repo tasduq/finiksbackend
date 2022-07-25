@@ -5,8 +5,13 @@ const phonebankController = require("../controllers/phonebank-controllers");
 const router = express.Router();
 
 router.post("/queryphonebank", phonebankController.queryPhonebank);
-router.post("/savelist", phonebankController.saveList);
-router.post("/getlists", phonebankController.getLists);
+router.post("/saverecord", phonebankController.saveRecord);
+router.post("/updaterecord", phonebankController.updateRecord);
+router.post("/getrecords", phonebankController.getRecords);
+router.post(
+  "/getcampaignteammembers",
+  phonebankController.getCampaignTeammembers
+);
 router.post(
   "/getlistsforphonebanking",
   phonebankController.getListsForPhonebanking

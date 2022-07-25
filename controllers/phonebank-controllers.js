@@ -1,5 +1,8 @@
 const Aristotle = require("../Models/Aristotledata");
 const List = require("../Models/Phonebanklists");
+const List2 = require("../Models/List");
+const Campaign = require("../Models/Campaign");
+const Team = require("../Models/Teammember");
 
 // var SEX = "F";
 // var PARTY_CODE = "I";
@@ -421,15 +424,30 @@ const queryPhonebank = async (req, res) => {
   }
 };
 
-const saveList = async (req, res, next) => {
+const saveRecord = async (req, res, next) => {
   console.log(req.body);
-  const { listName, campaignOwnerId, voters } = req.body;
+  const {
+    recordName,
+    campaignOwnerId,
+    teamMembers,
+    selectedList,
+    selectedScript,
+  } = req.body;
+
+  let listTotalNumbers = await List2.findOne(
+    { _id: selectedList },
+    "totalNumbers"
+  );
+  console.log(listTotalNumbers);
 
   const createdList = new List({
-    listName,
-    totalNumbers: voters.length,
+    recordName,
+    totalNumbers: listTotalNumbers?.totalNumbers,
     campaignOwnerId,
-    voters,
+    teamMembers,
+    list: selectedList,
+    scriptName: selectedScript.scriptName,
+    scriptId: selectedScript._id,
   });
 
   try {
@@ -439,12 +457,12 @@ const saveList = async (req, res, next) => {
         res.json({
           success: false,
           data: err,
-          message: "Creating List Failed",
+          message: "Creating Record Failed",
         });
         return;
       } else {
         res.json({
-          message: "List Saved ",
+          message: "Record Saved ",
           success: true,
         });
       }
@@ -454,19 +472,16 @@ const saveList = async (req, res, next) => {
     res.json({
       success: false,
       data: err,
-      message: "Creating List Faile. Trying again latter",
+      message: "Creating Record Faile. Trying again latter",
     });
   }
 };
 
-const getLists = async (req, res) => {
+const getRecords = async (req, res) => {
   const { campaignId } = req.body;
   console.log(req.body);
 
-  const phonebankLists = await List.find(
-    { campaignOwnerId: campaignId },
-    "-voters"
-  );
+  const phonebankLists = await List.find({ campaignOwnerId: campaignId });
 
   let reverse = phonebankLists.map((item) => item).reverse();
 
@@ -474,12 +489,12 @@ const getLists = async (req, res) => {
     res.json({
       success: true,
       phonebankLists: reverse,
-      message: "Lists Found for phonebanking",
+      message: "Records Found for phonebanking",
     });
   } else {
     res.json({
       success: false,
-      message: "Lists Not Found for phonebanking",
+      message: "Records Not Found for phonebanking",
     });
   }
 };
@@ -503,6 +518,77 @@ const getListsForPhonebanking = async (req, res) => {
       success: false,
       message: "Lists Not Found for phonebanking",
     });
+  }
+};
+
+const updateRecord = async (req, res) => {
+  console.log(req.body, "i am body");
+  const {
+    recordName,
+    campaignOwnerId,
+    teamMembers,
+    selectedList,
+    selectedScript,
+    recordId,
+  } = req.body;
+
+  let listTotalNumbers = await List2.findOne(
+    { _id: selectedList },
+    "totalNumbers"
+  );
+  console.log(listTotalNumbers, "i am totalNumbers");
+
+  if (recordId) {
+    try {
+      // ad = await Ad.findOne({ _id: id });
+
+      let ad = List.updateOne(
+        { _id: recordId },
+
+        {
+          $set: {
+            recordName,
+            campaignOwnerId,
+            totalNumbers: listTotalNumbers?.totalNumbers,
+            teamMembers,
+            list: selectedList,
+            scriptName: selectedScript.scriptName,
+            scriptId: selectedScript._id,
+          },
+        },
+        function (err) {
+          console.log(err);
+          if (err) {
+            res.json({
+              success: false,
+              message: "Something went wrong",
+            });
+            return;
+          } else {
+            res.json({
+              success: true,
+              message: "Record Updated",
+            });
+            return;
+          }
+        }
+      );
+
+      console.log("done");
+    } catch (err) {
+      console.log(err);
+      res.json({
+        success: false,
+        message: "Something went wrong",
+      });
+      return;
+    }
+  } else {
+    res.json({
+      success: false,
+      message: "Record Id not found",
+    });
+    return;
   }
 };
 
@@ -630,12 +716,49 @@ const deleteList = async (req, res) => {
   }
 };
 
+const getCampaignTeammembers = async (req, res) => {
+  console.log(req.body, "teammembers");
+  const teamMembers = await Campaign.findOne(
+    { _id: req.body.campaignId },
+    "teamMembers"
+  );
+  console.log(teamMembers, "teammembers");
+  if (teamMembers.teamMembers.length > 0) {
+    console.log("in iffff");
+    let teamMembersEmail = teamMembers.teamMembers.map((member) => {
+      return member.email;
+    });
+    console.log(teamMembersEmail, "emails");
+
+    let foundTeammembers = await Team.find(
+      {
+        email: { $in: teamMembersEmail },
+      },
+      ["firstName", "lastName", "email", "image", "campaignJoined"]
+    );
+    console.log(foundTeammembers, "foundTeammembers");
+    res.json({
+      success: true,
+      teamMembers: foundTeammembers,
+    });
+  } else {
+    console.log("in elseeee");
+    res.json({
+      message:
+        "No team members Found. Its better to have some before making Phonebanking lists",
+      success: false,
+    });
+  }
+};
+
 module.exports = {
   queryPhonebank,
-  saveList,
-  getLists,
+  saveRecord,
+  getRecords,
   updateList,
   deleteList,
   editList,
   getListsForPhonebanking,
+  getCampaignTeammembers,
+  updateRecord,
 };

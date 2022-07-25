@@ -273,6 +273,7 @@ const getCampaignData = async (req, res) => {
       success: true,
       message: "Campaign Data found",
       values: {
+        campaignName: campaignData.campaignName,
         campaignLogo: campaignData.campaignLogo
           ? campaignData.campaignLogo
           : "",
@@ -290,6 +291,28 @@ const getCampaignData = async (req, res) => {
             },
       },
     });
+  }
+};
+
+const getCampaignFilterData = async (req, res) => {
+  console.log(req.body);
+  const campaignData = await Campaign.findOne({ _id: req.body.campaignId }, [
+    "state",
+    "district",
+    "county",
+    "city",
+    "level",
+    "countyCommission",
+  ]);
+  console.log(campaignData);
+  if (campaignData) {
+    res.json({
+      success: true,
+      message: "Campaign Data found",
+      values: campaignData,
+    });
+  } else {
+    res.json({ success: false, message: "Campaign Data not found" });
   }
 };
 
@@ -392,4 +415,5 @@ module.exports = {
   getCampaignData,
   getTeamMembers,
   getCampaignTeammembers,
+  getCampaignFilterData,
 };
