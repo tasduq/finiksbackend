@@ -3,6 +3,8 @@ const Campaignsurvey = require("../Models/Campaignsurveys");
 const Voter = require("../Models/Finiksdata");
 const Tag = require("../Models/Tag");
 const Team = require("../Models/Teammember");
+const List = require("../Models/List");
+const Phonebank = require("../Models/Phonebanklists");
 const { v4: uuidv4 } = require("uuid");
 
 const addSurvey = async (req, res) => {
@@ -180,6 +182,9 @@ const connectSurveyToUser = async (req, res) => {
     tags,
     actions,
     contactedWay,
+    list,
+    recordId,
+    totalNumbers,
   } = req.body;
 
   let tagsWithDetails = tags.map((tag) => {
@@ -488,17 +493,84 @@ const connectSurveyToUser = async (req, res) => {
                               {
                                 $set: { campaignJoined: member },
                               },
-                              (err) => {
+                              async (err) => {
                                 if (err) {
                                   res.json({
                                     success: false,
                                     message: "Voter Data Updation failed",
                                   });
                                 } else {
-                                  res.json({
-                                    success: true,
-                                    message: "Voter Data Updated",
+                                  let listFound = await List.findOne({
+                                    _id: list,
                                   });
+                                  console.log(listFound);
+                                  let voterFound = listFound?.voters?.find(
+                                    (voter) => voter._id === voterId
+                                  );
+                                  console.log(
+                                    voterFound,
+                                    "voterFound",
+                                    tagsWithDetails
+                                  );
+                                  List.update(
+                                    {
+                                      _id: list,
+                                      "voters._id": voterId,
+                                    },
+                                    {
+                                      $set: {
+                                        "voters.$.voterTags": [
+                                          ...voterFound?.voterTags,
+                                          ...tagsWithDetails,
+                                        ],
+                                        "voters.$.lastInfluenced": new Date(),
+                                      },
+                                    },
+                                    async (err) => {
+                                      if (err) {
+                                        console.log(err);
+                                        res.json({
+                                          success: false,
+                                          message: "Error Updating Voter Tags",
+                                        });
+                                      } else {
+                                        if (recordType === "phonebanking") {
+                                          let recordFound =
+                                            await Phonebank.findOne(
+                                              { _id: recordId },
+                                              "totalCalled"
+                                            );
+
+                                          Phonebank.updateOne(
+                                            { _id: recordId },
+                                            {
+                                              $inc: { totalCalled: 1 },
+                                              $set: {
+                                                numbersLeft:
+                                                  totalNumbers -
+                                                  recordFound?.totalCalled,
+                                              },
+                                            },
+                                            (err) => {
+                                              if (err) {
+                                                console.log(err);
+                                                res.json({
+                                                  success: false,
+                                                  message:
+                                                    "Error Updating Phonebank Record",
+                                                });
+                                              } else {
+                                                res.json({
+                                                  success: true,
+                                                  message: "Voter Data Updated",
+                                                });
+                                              }
+                                            }
+                                          );
+                                        }
+                                      }
+                                    }
+                                  );
                                 }
                               }
                             );

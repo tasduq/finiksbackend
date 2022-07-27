@@ -1,5 +1,10 @@
 const Teammember = require("../Models/Teammember");
 const Campaign = require("../Models/Campaign");
+const Phonebank = require("../Models/Phonebanklists");
+const List = require("../Models/List");
+const Script = require("../Models/Script");
+const Tags = require("../Models/Tag");
+const Survey = require("../Models/Survey");
 const bcrypt = require("bcryptjs");
 var otpGenerator = require("otp-generator");
 var sendEmail = require("../Utils/Sendemail");
@@ -73,6 +78,7 @@ const register = async (req, res, next) => {
       address,
       phoneNumber,
       emailVerificationCode: otp,
+      role: "team",
     });
 
     try {
@@ -97,7 +103,7 @@ const register = async (req, res, next) => {
               "Kindly Verify Your email for getting registered to the Platform",
           });
           res.json({
-            message: "Teammember Registered",
+            message: "Otp sent to Email",
             success: true,
           });
         }
@@ -263,11 +269,14 @@ const login = async (req, res, next) => {
   res.json({
     message: "you are login success fully ",
     firstName: existingUser.firstName,
+    lastName: existingUser.lastName,
     id: existingUser._id,
     email: existingUser.email,
     access_token: access_token,
+    role: existingUser.role,
     success: true,
     campaignJoined: existingUser.campaignJoined,
+    emailVerified: existingUser.emailVerified,
   });
 };
 
@@ -356,7 +365,10 @@ const joinCampaign = async (req, res) => {
     );
 
     if (alreadyJoined) {
-      res.json({ message: "You have already joined the campaign" });
+      res.json({
+        message: "You have already joined the campaign",
+        success: false,
+      });
       return;
     }
 
@@ -449,6 +461,105 @@ const joinCampaign = async (req, res) => {
   }
 };
 
+const getJoinedCampaigns = async (req, res) => {
+  const { id } = req.body;
+  console.log(id);
+
+  const joinedCampaigns = await Teammember.findOne(
+    { _id: id },
+    "campaignJoined"
+  );
+  console.log(joinedCampaigns);
+  if (joinedCampaigns) {
+    res.json({
+      success: true,
+      joinedCampaigns: joinedCampaigns.campaignJoined,
+    });
+  } else {
+    res.json({
+      success: false,
+      message: "Campaigns Not found",
+    });
+  }
+};
+
+const getTeamPhonebankRecords = async (req, res) => {
+  const { campaignId, teamMemberEmail } = req.body;
+  console.log(req.body);
+  if (campaignId && teamMemberEmail) {
+    let records = await Phonebank.find({ campaignOwnerId: campaignId });
+    console.log(records);
+    let memberRecords = records.filter((record) => {
+      return (
+        record.teamMembers.includes(teamMemberEmail) &&
+        record.active === "Active"
+      );
+    });
+    console.log(memberRecords);
+    res.json({
+      success: true,
+      records: memberRecords,
+      message: "Found",
+    });
+  } else {
+    res.json({
+      success: false,
+      message: "campaign is not selected or Email is Invalid",
+    });
+  }
+};
+
+const getList = async (req, res) => {
+  console.log(req.body);
+
+  const list = await List.findOne({ _id: req.body.id });
+  console.log(list);
+  if (list) {
+    res.json({ success: true, list });
+  } else {
+    res.json({ success: false, message: "List not found" });
+  }
+};
+
+const getScript = async (req, res) => {
+  console.log(req.body);
+
+  const script = await Script.findOne({ _id: req.body.id });
+  console.log(script);
+  if (script) {
+    res.json({ success: true, script });
+  } else {
+    res.json({ success: false, message: "script not found" });
+  }
+};
+
+const getTags = async (req, res) => {
+  console.log(req.body);
+  const { id } = req.body;
+
+  const tags = await Tags.find({ campaignOwnerId: req.body.id });
+  console.log(tags);
+  if (tags) {
+    res.json({
+      success: true,
+      tags: tags,
+    });
+  } else {
+    res.json({ success: false, message: "Tags not found for the campaign" });
+  }
+};
+
+const getSurvey = async (req, res) => {
+  console.log(req.body);
+
+  let survey = await Survey.findOne({ campaignOwnerId: req.body.id });
+  if (survey) {
+    res.json({ success: true, survey: survey });
+  } else {
+    res.json({ success: false, message: "No survey found" });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -456,4 +567,10 @@ module.exports = {
   joinCampaign,
   emailVerify,
   requestNewEmailOtp,
+  getJoinedCampaigns,
+  getTeamPhonebankRecords,
+  getList,
+  getScript,
+  getTags,
+  getSurvey,
 };

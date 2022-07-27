@@ -17,6 +17,7 @@ const teamMemberSchema = new Schema({
   emailVerified: { type: Boolean, default: false },
   emailVerificationCode: { type: String },
   image: { type: String },
+  role: { type: String },
 });
 
 module.exports = mongoose.model("Teammember", teamMemberSchema);

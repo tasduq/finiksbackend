@@ -218,11 +218,19 @@ const saveList = async (req, res, next) => {
   const { listName, campaignOwnerId, voters } = req.body;
   console.log(listName);
 
+  let newVoters = voters?.map((voter) => {
+    return {
+      ...voter,
+      voterTags: [],
+    };
+  });
+  // console.log(newVoters);
+
   const createdList = new List({
     listName,
     totalNumbers: voters.length,
     campaignOwnerId,
-    voters,
+    voters: newVoters,
   });
 
   try {
