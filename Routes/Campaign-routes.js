@@ -16,4 +16,6 @@ router.post(
   campaignController.getCampaignTeammembers
 );
 
+router.post("/updateprofile", campaignController.updateProfile);
+
 module.exports = router;

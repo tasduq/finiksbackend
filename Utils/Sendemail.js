@@ -33,7 +33,7 @@ const sendEmail = (data) => {
     let mailOptions = {
       from: '"Finiks Official" <finiksplatform@gmail.com>', // sender address
       to: data.email, // list of receivers
-      subject: "Campaign Invite", // Subject line
+      subject: "Finiks Code", // Subject line
       // text: details, // plain text body
       html: output, // html body
     };

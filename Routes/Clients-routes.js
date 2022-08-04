@@ -9,5 +9,6 @@ router.get("/getclients", clientsController.getClients);
 router.post("/editclient", clientsController.editClient);
 router.post("/deleteclient", clientsController.deleteClient);
 router.post("/getdistricts", clientsController.getDistricts);
+// router.post("/getanalytics", clientsController.getAnalytics);
 
 module.exports = router;

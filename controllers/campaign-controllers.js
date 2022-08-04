@@ -22,7 +22,7 @@ const register = async (req, res, next) => {
     countyCommission,
     city,
   } = req.body;
-  console.log(req.body);
+  // console.log(req.body);
 
   if (campaignName && email && password) {
     let existingCampaign;
@@ -101,7 +101,7 @@ const register = async (req, res, next) => {
             campaignCode: "Your Campaign Got Registered at Finiks Platform",
             campaignName: campaignName,
             heading: "Campaign Joining",
-            message: `We Have Registered Your Campaign at Finiks Platform. You can Login at  and here are the login Details, Email : ${email} and Password : ${password}`,
+            message: `We Have Registered Your Campaign at Finiks Platform. You can Login at  https://www.finiksapp.com/logins  and here are the login Details, Email : ${email} and Password : ${password}`,
           });
           res.json({
             message: "Campaign Registered",
@@ -140,12 +140,133 @@ const login = async (req, res, next) => {
   }
 
   if (!existingUser) {
-    res.json({
-      success: false,
-      message: "Logging in failed, please try again later.",
-    });
+    let member = await Campaign.find(
+      {
+        teamMembers: {
+          $elemMatch: { email: email, permission: "campaignManager" },
+        },
+      },
+      ["campaignCode", "campaignDates", "campaignLogo", "campaignName"]
+    );
+    console.log(member, "member");
+    if (member?.length > 0) {
+      let memberData = await Team.findOne({ email: email }, [
+        "firstName",
+        "lastName",
+        "campaignLogo",
+        "emailVerified",
+        "password",
+        "phoneNumber",
+        "address",
+        "campaignJoined",
+      ]);
+      console.log(memberData, "memberData");
+      let yoo = member.map((campaignFound) => {
+        let campaignJoined = memberData.campaignJoined.find(
+          (campaign) => campaign?.campaignId == campaignFound._id
+        );
+        if (campaignJoined) {
+          return campaignJoined;
+        }
+      });
 
-    return;
+      console.log(yoo, "yuooooooooo");
+
+      yoo = yoo.filter((subYoo) => subYoo !== undefined);
+      console.log(yoo, "yuooooooooo");
+
+      let finalCampaigns = member.map((campaign) => {
+        console.log(campaign, "campaign");
+        let foundJoinedCampaign = yoo.find((subYoo) => {
+          console.log(subYoo, "subyoooo");
+          return subYoo.campaignId.toString() === campaign._id.toString();
+        });
+
+        return {
+          campaignName: campaign?.campaignName,
+          campaignCode: campaign?.campaignCode,
+          campaignLogo: campaign?.campaignLogo,
+          campaignDates: campaign?.campaignDates,
+          disabled: foundJoinedCampaign?.disabled,
+          permission: foundJoinedCampaign?.permission,
+          _id: campaign?._id,
+        };
+      });
+
+      console.log(finalCampaigns, "finalcampiagns");
+
+      if (memberData) {
+        let isValidPassword = false;
+        try {
+          isValidPassword = await bcrypt.compare(password, memberData.password);
+        } catch (err) {
+          res.json({
+            success: false,
+            data: err,
+            message:
+              "Could not log you in, please check your credentials and try again.",
+          });
+          return;
+        }
+
+        if (!isValidPassword) {
+          res.json({
+            success: false,
+            message:
+              "Could not log you in, please check your credentials and try again.",
+          });
+          return;
+        }
+
+        let access_token;
+        try {
+          access_token = jwt.sign(
+            { userId: member._id, email: email },
+            "myprivatekey",
+            { expiresIn: "1h" }
+          );
+        } catch (err) {
+          res.json({
+            success: false,
+            data: err,
+            message: "Logging in failed, please try again later.",
+          });
+          return;
+        }
+
+        res.json({
+          message: "you are login success fully ",
+          username: `${memberData.firstName} ${memberData.lastName}`,
+          id: "",
+          userId: memberData._id,
+          email: email,
+          access_token: access_token,
+          success: true,
+          role: "",
+          campaignCode: "",
+          campaignLogo: memberData.campaignLogo,
+          teamLogin: true,
+          campaigns: finalCampaigns,
+          phoneNumber: memberData.phoneNumber,
+          address: memberData.address,
+          firstName: memberData.firstName,
+          lastName: memberData.lastName,
+        });
+        return;
+      } else {
+        res.json({
+          success: false,
+          message: "You are not a member",
+        });
+      }
+    } else {
+      res.json({
+        success: false,
+        message: "You dont have access",
+      });
+
+      return;
+    }
   }
 
   let isValidPassword = false;
@@ -185,17 +306,25 @@ const login = async (req, res, next) => {
     });
     return;
   }
-  console.log(existingUser);
+  // console.log(existingUser);
 
   res.json({
     message: "you are login success fully ",
     username: existingUser.campaignName,
     id: existingUser._id,
+    userId: existingUser._id,
     email: existingUser.email,
     access_token: access_token,
     success: true,
     role: existingUser.role,
     campaignCode: existingUser.campaignCode,
+    campaignLogo: existingUser.campaignLogo,
+    teamLogin: false,
+    phoneNumber: existingUser.phoneNumber,
+    address: existingUser.address,
+    firstName: existingUser.firstName,
+    lastName: existingUser.lastName,
+    campaigns: [],
   });
 };
 
@@ -243,6 +372,108 @@ const updateCampaignData = async (req, res) => {
     return;
   }
 };
+
+const updateProfile = async (req, res) => {
+  const {
+    firstName,
+    lastName,
+    address,
+    phoneNumber,
+    teamLogin,
+    id,
+    campaignLogo,
+  } = req.body;
+  // console.log(req.body);
+
+  if (teamLogin === "true") {
+    try {
+      // ad = await Ad.findOne({ _id: id });
+
+      let ad = Team.updateOne(
+        { _id: id },
+
+        {
+          $set: {
+            firstName,
+            lastName,
+            address,
+            phoneNumber,
+            campaignLogo,
+          },
+        },
+        function (err) {
+          console.log(err);
+          if (err) {
+            res.json({
+              success: false,
+              message: "Something went wrong",
+            });
+            return;
+          } else {
+            res.json({
+              success: true,
+              message: "Profile Updated",
+            });
+            return;
+          }
+        }
+      );
+
+      console.log("done");
+    } catch (err) {
+      console.log(err);
+      res.json({
+        success: false,
+        message: "Something went wrong",
+      });
+      return;
+    }
+  } else {
+    try {
+      // ad = await Ad.findOne({ _id: id });
+
+      let ad = Campaign.updateOne(
+        { _id: id },
+
+        {
+          $set: {
+            firstName,
+            lastName,
+            address,
+            phoneNumber,
+            campaignLogo,
+          },
+        },
+        function (err) {
+          console.log(err);
+          if (err) {
+            res.json({
+              success: false,
+              message: "Something went wrong",
+            });
+            return;
+          } else {
+            res.json({
+              success: true,
+              message: "Campaign Profile Updated",
+            });
+            return;
+          }
+        }
+      );
+
+      console.log("done");
+    } catch (err) {
+      console.log(err);
+      res.json({
+        success: false,
+        message: "Something went wrong",
+      });
+      return;
+    }
+  }
+};
+
 const getNewCode = async (req, res) => {
   let code = otpGenerator.generate(6, {
     upperCase: true,
@@ -319,7 +550,10 @@ const getCampaignFilterData = async (req, res) => {
 const getTeamMembers = async (req, res) => {
   const { campaignId } = req.body;
 
-  const campaignFound = await Campaign.findOne({ _id: campaignId });
+  const campaignFound = await Campaign.findOne(
+    { _id: campaignId },
+    "teamMembers"
+  );
   console.log(campaignFound);
 
   let teamMembers = campaignFound.teamMembers;
@@ -329,10 +563,17 @@ const getTeamMembers = async (req, res) => {
   });
   console.log(teamMembersEmails, "Emails");
 
-  const foundTeam = await Team.find({ email: teamMembersEmails }, "-password");
+  const foundTeam = await Team.find({ email: teamMembersEmails }, [
+    "firstName",
+    "lastName",
+    "email",
+    "phoneNumber",
+    "campaignJoined",
+  ]);
   console.log(foundTeam, "found Team");
 
   const finalTeams = foundTeam.map((member) => {
+    console.log(member, "member");
     // let matchedMember = teamMembers.find(
     //   (memberObject) => memberObject.email === member.email
     // );
@@ -341,23 +582,25 @@ const getTeamMembers = async (req, res) => {
     let campaign = member.campaignJoined.find(
       (campaign) => campaign.campaignId.toString() === campaignId
     );
+
     if (campaign) {
       return {
         memberName: `${member.firstName} ${member.lastName}`,
-        permission: member?.permission,
+        permission: campaign?.permission,
         email: member?.email,
         phoneNumber: member?.phoneNumber,
-        dateJoined: member?.dateJoined?.toString().split("G")[0],
+        dateJoined: campaign?.dateJoined?.toString().split("G")[0],
         votersInfluenced: campaign?.votersInfluenced,
         doorsKnocked: campaign?.doorsKnocked,
         votersSurveyed: campaign?.votersSurveyed,
         votersMessaged: campaign?.votersMessaged,
         phonesCalled: campaign?.phonesCalled,
+        disabled: campaign?.disabled,
       };
     }
   });
 
-  console.log(finalTeams);
+  console.log(finalTeams, "finalTeams");
 
   if (finalTeams?.length > 0) {
     res.json({
@@ -416,4 +659,5 @@ module.exports = {
   getTeamMembers,
   getCampaignTeammembers,
   getCampaignFilterData,
+  updateProfile,
 };

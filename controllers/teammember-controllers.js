@@ -123,82 +123,155 @@ const register = async (req, res, next) => {
 };
 
 const emailVerify = async (req, res) => {
-  const { otp, email } = req.body;
+  console.log(req.body);
+  const { otp, email, prevPath } = req.body;
   let user;
 
-  try {
-    user = await Teammember.findOne({ email: email }, "-password");
-    console.log(user);
-    if (user) {
-      if (user.emailVerificationCode === otp) {
-        Teammember.updateOne(
-          { email: email },
-          { $set: { emailVerified: true } },
-          function (err) {
-            if (!err) {
-              return res.json({
-                success: true,
-                message: "Email Verified",
-              });
+  if (prevPath === "/logincampaign") {
+    try {
+      user = await Campaign.findOne({ email: email }, "-password");
+      console.log(user);
+      if (user) {
+        if (user.emailVerificationCode === otp) {
+          Campaign.updateOne(
+            { email: email },
+            { $set: { emailVerified: true } },
+            function (err) {
+              if (!err) {
+                return res.json({
+                  success: true,
+                  message: "Email Verified",
+                });
+              }
             }
-          }
-        );
-      } else {
-        res.json({ success: false, message: "Otp Wrong" });
-        return;
+          );
+        } else {
+          res.json({ success: false, message: "Otp Wrong" });
+          return;
+        }
       }
+    } catch (err) {
+      return res.json({ success: false, message: "Somthing went wrong" });
     }
-  } catch (err) {
-    return res.json({ success: false, message: "Somthing went wrong" });
+  } else {
+    try {
+      user = await Teammember.findOne({ email: email }, "-password");
+      console.log(user);
+      if (user) {
+        if (user.emailVerificationCode === otp) {
+          Teammember.updateOne(
+            { email: email },
+            { $set: { emailVerified: true } },
+            function (err) {
+              if (!err) {
+                return res.json({
+                  success: true,
+                  message: "Email Verified",
+                });
+              }
+            }
+          );
+        } else {
+          res.json({ success: false, message: "Otp Wrong" });
+          return;
+        }
+      }
+    } catch (err) {
+      return res.json({ success: false, message: "Somthing went wrong" });
+    }
   }
 };
 
 const requestNewEmailOtp = async (req, res) => {
   console.log(req.body);
-  const { email } = req.body;
+  const { email, prevPath } = req.body;
 
-  let user = await Teammember.findOne({ email: email }, "-password");
-  if (user) {
-    let otp = otpGenerator.generate(6, {
-      upperCase: true,
-      specialChars: true,
-      alphabets: true,
-    });
+  if (prevPath === "/logincampaign") {
+    let user = await Campaign.findOne({ email: email }, "-password");
+    if (user) {
+      let otp = otpGenerator.generate(6, {
+        upperCase: true,
+        specialChars: true,
+        alphabets: true,
+      });
 
-    Teammember.updateOne(
-      { email: email },
-      { $set: { emailVerificationCode: otp } },
-      function (err) {
-        if (!err) {
-          console.log("Otp Email Updated");
-          sendEmail.sendEmail({
-            // firstName,
-            // lastName,
-            email: email,
-            campaignCode: otp,
-            // campaignName: "",
-            heading: "OTP Verification Code",
-            message:
-              "Kindly Verify Your email for getting registered to the Platform",
-          });
-          return res.json({
-            success: true,
-            message: "New OTP Sent to your email",
-          });
-        } else {
-          res.json({
-            success: false,
-            message: "Something went wrong",
-          });
-          return;
+      Campaign.updateOne(
+        { email: email },
+        { $set: { emailVerificationCode: otp } },
+        function (err) {
+          if (!err) {
+            console.log("Otp Email Updated");
+            sendEmail.sendEmail({
+              // firstName,
+              // lastName,
+              email: email,
+              campaignCode: otp,
+              // campaignName: "",
+              heading: "OTP Verification Code",
+              message: "Kindly Verify Your email ",
+            });
+            return res.json({
+              success: true,
+              message: "New OTP Sent to your email",
+            });
+          } else {
+            res.json({
+              success: false,
+              message: "Something went wrong",
+            });
+            return;
+          }
         }
-      }
-    );
+      );
+    } else {
+      res.json({
+        success: false,
+        message: "User Email not exist",
+      });
+    }
   } else {
-    res.json({
-      success: false,
-      message: "User Email not exist",
-    });
+    let user = await Teammember.findOne({ email: email }, "-password");
+    if (user) {
+      let otp = otpGenerator.generate(6, {
+        upperCase: true,
+        specialChars: true,
+        alphabets: true,
+      });
+
+      Teammember.updateOne(
+        { email: email },
+        { $set: { emailVerificationCode: otp } },
+        function (err) {
+          if (!err) {
+            console.log("Otp Email Updated");
+            sendEmail.sendEmail({
+              // firstName,
+              // lastName,
+              email: email,
+              campaignCode: otp,
+              // campaignName: "",
+              heading: "OTP Verification Code",
+              message: "Kindly Verify Your email",
+            });
+            return res.json({
+              success: true,
+              message: "New OTP Sent to your email",
+            });
+          } else {
+            res.json({
+              success: false,
+              message: "Something went wrong",
+            });
+            return;
+          }
+        }
+      );
+    } else {
+      res.json({
+        success: false,
+        message: "User Email not exist",
+      });
+    }
   }
 };
 
@@ -266,18 +339,135 @@ const login = async (req, res, next) => {
   }
   console.log(existingUser);
 
+  let campaignsJoined = existingUser?.campaignJoined?.filter(
+    (campaign) => campaign.permission !== "campaignManager"
+  );
+
+  console.log(campaignsJoined, "campaigns joined");
+
   res.json({
     message: "you are login success fully ",
     firstName: existingUser.firstName,
     lastName: existingUser.lastName,
+    username: `${existingUser.firstName} ${existingUser.lastName}`,
     id: existingUser._id,
+    userId: existingUser._id,
     email: existingUser.email,
     access_token: access_token,
     role: existingUser.role,
     success: true,
     campaignJoined: existingUser.campaignJoined,
     emailVerified: existingUser.emailVerified,
+    campaignLogo: existingUser.campaignLogo,
+    teamLogin: true,
+    phoneNumber: existingUser.phoneNumber,
+    address: existingUser.address,
+    campaigns: campaignsJoined,
   });
+};
+
+const newPassword = async (req, res) => {
+  console.log(req.body);
+
+  const { password, email, recentOtp, prevPath } = req.body;
+  console.log(password, email, recentOtp, "details");
+
+  if (password && email && recentOtp) {
+    let hashedPassword;
+    try {
+      hashedPassword = await bcrypt.hash(password, 12);
+    } catch (err) {
+      console.log("Error hashing password", err);
+
+      res.json({
+        success: false,
+        data: err,
+        message: "Something went wrong",
+      });
+      return;
+    }
+
+    if (prevPath === "/logincampaign") {
+      try {
+        let user = await Campaign.findOne({ email: email }, "-password");
+        console.log(user);
+        if (user) {
+          if (user.emailVerificationCode === recentOtp) {
+            Campaign.updateOne(
+              { email: email },
+              { $set: { password: hashedPassword } },
+              function (err) {
+                if (!err) {
+                  console.log("Updated");
+                  return res.json({
+                    success: true,
+                    message: "Password Updated",
+                  });
+                } else {
+                  // console.log(err);
+                  res.json({
+                    success: false,
+                    data: err,
+                    message: "Something went wrong",
+                  });
+                  return;
+                }
+              }
+            );
+          } else {
+            res.json({ success: false, message: "Otp Wrong" });
+            return;
+          }
+        } else {
+          return res.json({ success: false, message: "Somthing went wrong" });
+        }
+      } catch (err) {
+        return res.json({ success: false, message: "Somthing went wrong" });
+      }
+    } else {
+      try {
+        let user = await Teammember.findOne({ email: email }, "-password");
+        console.log(user);
+        if (user) {
+          if (user.emailVerificationCode === recentOtp) {
+            Teammember.updateOne(
+              { email: email },
+              { $set: { password: hashedPassword } },
+              function (err) {
+                if (!err) {
+                  console.log("Updated");
+                  return res.json({
+                    success: true,
+                    message: "Password Updated",
+                  });
+                } else {
+                  // console.log(err);
+                  res.json({
+                    success: false,
+                    data: err,
+                    message: "Something went wrong",
+                  });
+                  return;
+                }
+              }
+            );
+          } else {
+            res.json({ success: false, message: "Otp Wrong" });
+            return;
+          }
+        } else {
+          return res.json({ success: false, message: "Somthing went wrong" });
+        }
+      } catch (err) {
+        return res.json({ success: false, message: "Somthing went wrong" });
+      }
+    }
+  } else {
+    res.json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
 };
 
 const sendInvite = async (req, res) => {
@@ -303,18 +493,28 @@ const sendInvite = async (req, res) => {
     campaignCode,
     campaignName,
     heading: "Campaign Joining Code",
-    message: "We are inviting you for joining our campaign",
+    message: `We are inviting you for joining our campaign. ${about}, login at https://www.finiksapp.com/logins`,
   });
 
-  // const campaignFound = await Campaign.findOne({_id : campaignId})
+  const campaignFound = await Campaign.findOne(
+    { _id: campaignId },
+    "invitedTeamMembers"
+  );
+
+  let yoo = campaignFound.invitedTeamMembers;
+  console.log(yoo, "yoo1");
+  yoo = yoo.filter((subYoo) => subYoo.email !== email);
+  console.log(yoo, "yoo1");
+  yoo = [...yoo, { email, permission }];
+  console.log(yoo, "yoo1");
 
   try {
     let ad = Campaign.updateOne(
       { _id: campaignId },
 
       {
-        $push: {
-          invitedTeamMembers: { email, permission },
+        $set: {
+          invitedTeamMembers: yoo,
         },
       },
       function (err) {
@@ -331,6 +531,112 @@ const sendInvite = async (req, res) => {
             message: "User Invited",
           });
           return;
+        }
+      }
+    );
+
+    console.log("done");
+  } catch (err) {
+    console.log(err);
+    res.json({
+      success: false,
+      message: "Something went wrong",
+    });
+    return;
+  }
+};
+
+const editMember = async (req, res) => {
+  console.log(req.body, "body");
+  const {
+    firstName,
+    lastName,
+    email,
+    permission,
+    about,
+    campaignId,
+    campaignCode,
+    campaignName,
+    disabled,
+  } = req.body;
+
+  sendEmail.sendEmail({
+    firstName,
+    lastName,
+    email,
+    campaignCode,
+    campaignName,
+    heading: "Campaign Joining Code",
+    message: `Your campaign Access Status updated. Now you access level is ${permission?.toUpperCase()} and your active status is ${permission?.toUpperCase()}, login at https://www.finiksapp.com/logins`,
+  });
+
+  const campaignFound = await Campaign.findOne(
+    { _id: campaignId },
+    "teamMembers"
+  );
+
+  let yoo = campaignFound.teamMembers;
+  console.log(yoo, "yoo1");
+  yoo = yoo.map((subYoo) => {
+    if (subYoo?.email === email) {
+      return {
+        ...subYoo,
+        permission: permission,
+        disabled: disabled,
+      };
+    } else {
+      return subYoo;
+    }
+  });
+  console.log(yoo, "yoo1");
+  // yoo = [...yoo, { email, permission }];
+  // console.log(yoo, "yoo1");
+
+  try {
+    let ad = Campaign.updateOne(
+      { _id: campaignId },
+
+      {
+        $set: {
+          teamMembers: yoo,
+        },
+      },
+      function (err) {
+        console.log(err);
+        if (err) {
+          res.json({
+            success: false,
+            message: "Something went wrong",
+          });
+          return;
+        } else {
+          Teammember.update(
+            {
+              email: email,
+              "campaignJoined.campaignId": campaignId.toString(),
+            },
+            {
+              $set: {
+                "campaignJoined.$.permission": permission,
+                "campaignJoined.$.disabled": disabled,
+              },
+            },
+            (err) => {
+              if (err) {
+                res.json({
+                  success: false,
+                  message: "Somthing went wrong",
+                });
+                return;
+              } else {
+                res.json({
+                  success: true,
+                  message: "Member Access Status Updated",
+                });
+                return;
+              }
+            }
+          );
         }
       }
     );
@@ -395,6 +701,7 @@ const joinCampaign = async (req, res) => {
                 votersSurveyed: 0,
                 votersMessaged: 0,
                 phonesCalled: 0,
+                disabled: false,
               },
             },
           },
@@ -412,11 +719,16 @@ const joinCampaign = async (req, res) => {
                 {
                   $push: {
                     campaignJoined: {
-                      campaignId: campaignFound._id,
+                      campaignId: campaignFound._id.toString(),
                       permission: invitedMember.permission,
                       dateJoined: new Date(),
                       votersInfluenced: 0,
+                      doorsKnocked: 0,
+                      votersSurveyed: 0,
+                      votersMessaged: 0,
+                      phonesCalled: 0,
                       campaignName: campaignFound.campaignName,
+                      disabled: true,
                     },
                   },
                 },
@@ -431,7 +743,7 @@ const joinCampaign = async (req, res) => {
                   } else {
                     res.json({
                       success: true,
-                      message: "You have joined the campaign",
+                      message: "You have joined the campaign.",
                     });
                     return;
                   }
@@ -462,18 +774,32 @@ const joinCampaign = async (req, res) => {
 };
 
 const getJoinedCampaigns = async (req, res) => {
-  const { id } = req.body;
+  const { id, role } = req.body;
   console.log(id);
 
   const joinedCampaigns = await Teammember.findOne(
     { _id: id },
     "campaignJoined"
   );
+
+  let yoo = [];
+  if (role === "campaignManager") {
+    yoo = joinedCampaigns.campaignJoined.filter(
+      (campaign) => campaign.permission === "campaignManager"
+    );
+  }
+
+  if (role === "team") {
+    yoo = joinedCampaigns.campaignJoined.filter(
+      (campaign) => campaign.permission !== "campaignManager"
+    );
+  }
+
   console.log(joinedCampaigns);
   if (joinedCampaigns) {
     res.json({
       success: true,
-      joinedCampaigns: joinedCampaigns.campaignJoined,
+      joinedCampaigns: yoo,
     });
   } else {
     res.json({
@@ -560,6 +886,135 @@ const getSurvey = async (req, res) => {
   }
 };
 
+const updateUserPassword = async (req, res) => {
+  console.log(req.body);
+
+  const { passwordUpdate, id, teamLogin } = req.body;
+  const { oldPassword, newPassword } = passwordUpdate;
+
+  let existingUser;
+
+  if (teamLogin !== "true") {
+    try {
+      existingUser = await Campaign.findOne({ _id: id }, "password");
+      console.log(existingUser);
+    } catch (err) {
+      res.json({
+        success: false,
+        message: "Something went wrong",
+      });
+      return;
+    }
+
+    let isValidPassword = false;
+    try {
+      isValidPassword = await bcrypt.compare(
+        oldPassword,
+        existingUser.password
+      );
+      console.log(isValidPassword);
+    } catch (err) {
+      res.json({
+        success: false,
+        data: err,
+        message: "Somthing Went Wrong",
+      });
+      return;
+    }
+
+    if (isValidPassword) {
+      let hashedPassword;
+      try {
+        hashedPassword = await bcrypt.hash(newPassword, 12);
+      } catch (err) {
+        console.log("Error hashing password", err);
+
+        res.json({
+          success: false,
+          data: err,
+          message: "Something went wrong",
+        });
+        return;
+      }
+
+      Campaign.updateOne(
+        { _id: id },
+        { $set: { password: hashedPassword } },
+        function (err) {
+          if (!err) {
+            return res.json({ success: true, message: "Password Updated" });
+          }
+        }
+      );
+    } else {
+      res.json({
+        success: false,
+        message: "Wrong Old PAssword",
+      });
+      return;
+    }
+  } else {
+    try {
+      existingUser = await Teammember.findOne({ _id: id }, "password");
+      console.log(existingUser);
+    } catch (err) {
+      res.json({
+        success: false,
+        message: "Something went wrong",
+      });
+      return;
+    }
+
+    let isValidPassword = false;
+    try {
+      isValidPassword = await bcrypt.compare(
+        oldPassword,
+        existingUser.password
+      );
+      console.log(isValidPassword);
+    } catch (err) {
+      res.json({
+        success: false,
+        data: err,
+        message: "Somthing Went Wrong",
+      });
+      return;
+    }
+
+    if (isValidPassword) {
+      let hashedPassword;
+      try {
+        hashedPassword = await bcrypt.hash(newPassword, 12);
+      } catch (err) {
+        console.log("Error hashing password", err);
+
+        res.json({
+          success: false,
+          data: err,
+          message: "Something went wrong",
+        });
+        return;
+      }
+
+      Teammember.updateOne(
+        { _id: id },
+        { $set: { password: hashedPassword } },
+        function (err) {
+          if (!err) {
+            return res.json({ success: true, message: "Password Updated" });
+          }
+        }
+      );
+    } else {
+      res.json({
+        success: false,
+        message: "Wrong Old PAssword",
+      });
+      return;
+    }
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -573,4 +1028,7 @@ module.exports = {
   getScript,
   getTags,
   getSurvey,
+  newPassword,
+  updateUserPassword,
+  editMember,
 };

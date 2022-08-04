@@ -16,6 +16,7 @@ const teamMemberSchema = new Schema({
   campaignJoined: { type: Array },
   emailVerified: { type: Boolean, default: false },
   emailVerificationCode: { type: String },
+  campaignLogo: { type: String },
   image: { type: String },
   role: { type: String },
 });

@@ -24,6 +24,11 @@ const campaignSchema = new Schema({
   county: { type: Array },
   countyCommission: { type: Array },
   city: { type: Array },
+  emailVerificationCode: { type: String },
+  firstName: { type: String },
+  lastName: { type: String },
+  address: { type: String },
+  phoneNumber: { type: String },
 });
 
 module.exports = mongoose.model("Campaign", campaignSchema);
