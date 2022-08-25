@@ -244,6 +244,7 @@ const login = async (req, res, next) => {
           success: true,
           role: "",
           campaignCode: "",
+          campaignName: "",
           campaignLogo: memberData.campaignLogo,
           teamLogin: true,
           campaigns: finalCampaigns,
@@ -318,6 +319,7 @@ const login = async (req, res, next) => {
     success: true,
     role: existingUser.role,
     campaignCode: existingUser.campaignCode,
+    campaignName: existingUser.campaignName,
     campaignLogo: existingUser.campaignLogo,
     teamLogin: false,
     phoneNumber: existingUser.phoneNumber,
@@ -587,6 +589,7 @@ const getTeamMembers = async (req, res) => {
       return {
         memberName: `${member.firstName} ${member.lastName}`,
         permission: campaign?.permission,
+        campaignPosition: campaign?.campaignPosition,
         email: member?.email,
         phoneNumber: member?.phoneNumber,
         dateJoined: campaign?.dateJoined?.toString().split("G")[0],

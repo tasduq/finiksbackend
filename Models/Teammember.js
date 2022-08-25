@@ -13,6 +13,7 @@ const teamMemberSchema = new Schema({
 
   active: { type: Boolean, default: true },
   permission: { type: String },
+  campaignPosition: { type: String },
   campaignJoined: { type: Array },
   emailVerified: { type: Boolean, default: false },
   emailVerificationCode: { type: String },

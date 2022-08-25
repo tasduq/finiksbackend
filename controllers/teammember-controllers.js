@@ -5,10 +5,12 @@ const List = require("../Models/List");
 const Script = require("../Models/Script");
 const Tags = require("../Models/Tag");
 const Survey = require("../Models/Survey");
+const Finiks = require("../Models/Finiksdata");
 const bcrypt = require("bcryptjs");
 var otpGenerator = require("otp-generator");
 var sendEmail = require("../Utils/Sendemail");
 const jwt = require("jsonwebtoken");
+const { consumers } = require("nodemailer/lib/xoauth2");
 
 const register = async (req, res, next) => {
   const { firstName, lastName, email, password, address, phoneNumber } =
@@ -473,12 +475,13 @@ const newPassword = async (req, res) => {
 const sendInvite = async (req, res) => {
   console.log(req.body);
   const {
-    firstName,
-    lastName,
+    // firstName,
+    // lastName,
     phoneNumber,
     email,
     address,
     permission,
+    campaignPosition,
     image,
     about,
     campaignId,
@@ -487,8 +490,8 @@ const sendInvite = async (req, res) => {
   } = req.body;
 
   sendEmail.sendEmail({
-    firstName,
-    lastName,
+    // firstName,
+    // lastName,
     email,
     campaignCode,
     campaignName,
@@ -505,7 +508,7 @@ const sendInvite = async (req, res) => {
   console.log(yoo, "yoo1");
   yoo = yoo.filter((subYoo) => subYoo.email !== email);
   console.log(yoo, "yoo1");
-  yoo = [...yoo, { email, permission }];
+  yoo = [...yoo, { email, permission, campaignPosition }];
   console.log(yoo, "yoo1");
 
   try {
@@ -546,13 +549,47 @@ const sendInvite = async (req, res) => {
   }
 };
 
+const addToTeam = async (req, res) => {
+  console.log(req.body);
+  const { email, campaignId } = req.body;
+
+  const campaignData = await Campaign.findOne({ _id: campaignId }, [
+    "email",
+    "campaignName",
+  ]);
+  console.log(campaignData);
+
+  if (campaignData) {
+    sendEmail.sendEmail({
+      // firstName,
+      // lastName,
+      email,
+      campaignCode: "",
+      campaignName: campaignData.campaignName,
+      heading: "",
+      message: `You can send an email to campaign manager for joining the campaign. Here is the campaign Manager email ${campaignData?.email}`,
+    });
+
+    res.json({
+      success: true,
+      message: "Invited Successfully",
+    });
+  } else {
+    res.json({
+      success: false,
+      message: "Somthing Went Wrong",
+    });
+  }
+};
+
 const editMember = async (req, res) => {
   console.log(req.body, "body");
   const {
-    firstName,
-    lastName,
+    // firstName,
+    // lastName,
     email,
     permission,
+    campaignPosition,
     about,
     campaignId,
     campaignCode,
@@ -561,8 +598,8 @@ const editMember = async (req, res) => {
   } = req.body;
 
   sendEmail.sendEmail({
-    firstName,
-    lastName,
+    // firstName,
+    // lastName,
     email,
     campaignCode,
     campaignName,
@@ -582,6 +619,7 @@ const editMember = async (req, res) => {
       return {
         ...subYoo,
         permission: permission,
+        campaignPosition,
         disabled: disabled,
       };
     } else {
@@ -618,6 +656,7 @@ const editMember = async (req, res) => {
             {
               $set: {
                 "campaignJoined.$.permission": permission,
+                "campaignJoined.$.campaignPosition": campaignPosition,
                 "campaignJoined.$.disabled": disabled,
               },
             },
@@ -721,6 +760,7 @@ const joinCampaign = async (req, res) => {
                     campaignJoined: {
                       campaignId: campaignFound._id.toString(),
                       permission: invitedMember.permission,
+                      campaignPosition: invitedMember.campaignPosition,
                       dateJoined: new Date(),
                       votersInfluenced: 0,
                       doorsKnocked: 0,
@@ -728,7 +768,7 @@ const joinCampaign = async (req, res) => {
                       votersMessaged: 0,
                       phonesCalled: 0,
                       campaignName: campaignFound.campaignName,
-                      disabled: true,
+                      disabled: false,
                     },
                   },
                 },
@@ -1015,6 +1055,75 @@ const updateUserPassword = async (req, res) => {
   }
 };
 
+const updateVoterInfo = async (req, res) => {
+  console.log(req.body);
+  const {
+    firstName,
+    lastName,
+    email,
+    phoneNumber,
+    mobileNumber,
+    address,
+    listId,
+    voterId,
+    campaignId,
+  } = req.body;
+
+  List.updateOne(
+    {
+      _id: listId,
+      "voters._id": voterId,
+    },
+    {
+      $set: {
+        "voters.$.FIRSTNAME": firstName,
+        "voters.$.LASTNAME": lastName,
+        "voters.$.ADDRESS": address,
+        "voters.$.PHONE_NUM": phoneNumber,
+        "voters.$.MOBILE_NUM": mobileNumber,
+        "voters.$.EMAIL": email,
+      },
+    },
+    async (err) => {
+      if (err) {
+        console.log(err);
+        res.json({
+          success: false,
+          message: "Voter data updation failed",
+        });
+      } else {
+        Finiks.updateOne(
+          { _id: voterId },
+          {
+            $set: {
+              FIRSTNAME: firstName,
+              LASTNAME: lastName,
+              ADDRESS: address,
+              PHONE_NUM: phoneNumber,
+              MOBILE_NUM: mobileNumber,
+              EMAIL: email,
+            },
+          },
+          (err) => {
+            if (err) {
+              console.log(err);
+              res.json({
+                success: false,
+                message: "Voter data updation failed",
+              });
+            } else {
+              res.json({
+                success: true,
+                message: "Voter data updated",
+              });
+            }
+          }
+        );
+      }
+    }
+  );
+};
+
 module.exports = {
   register,
   login,
@@ -1031,4 +1140,6 @@ module.exports = {
   newPassword,
   updateUserPassword,
   editMember,
+  addToTeam,
+  updateVoterInfo,
 };

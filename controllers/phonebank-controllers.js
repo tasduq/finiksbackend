@@ -443,6 +443,8 @@ const saveRecord = async (req, res, next) => {
   const createdList = new List({
     recordName,
     totalNumbers: listTotalNumbers?.totalNumbers,
+    totalCalled: 0,
+    numbersLeft: 0,
     campaignOwnerId,
     teamMembers,
     list: selectedList,

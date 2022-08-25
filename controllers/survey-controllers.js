@@ -1,6 +1,7 @@
 const Survey = require("../Models/Survey");
 const Campaignsurvey = require("../Models/Campaignsurveys");
 const Voter = require("../Models/Finiksdata");
+const Aristotle = require("../Models/Aristotledata");
 const Tag = require("../Models/Tag");
 const Team = require("../Models/Teammember");
 const List = require("../Models/List");
@@ -111,6 +112,115 @@ const addSurvey = async (req, res) => {
     res.json({
       success: false,
       message: "Campaign Error",
+    });
+    return;
+  }
+};
+
+const editSurvey = async (req, res) => {
+  console.log(req.body);
+
+  const {
+    surveyName,
+    surveyPreview,
+    surveyQuestion,
+    surveyAnswers,
+    active,
+    color,
+    campaignId,
+    campaignName,
+    surveyId,
+    responses,
+  } = req.body;
+
+  if (campaignId && campaignName && surveyId) {
+    // let foundCampaignSurvey = await Survey.findOne({
+    //   campaignOwnerId: campaignId,
+    // });
+    // console.log(foundCampaignSurvey);
+
+    Survey.update(
+      {
+        campaignOwnerId: campaignId.toString(),
+        "surveyQuestions.surveyId": surveyId,
+      },
+      {
+        $set: {
+          "surveyQuestions.$.surveyId": surveyId,
+          "surveyQuestions.$.surveyName": surveyName,
+          "surveyQuestions.$.surveyPreview": surveyPreview,
+          "surveyQuestions.$.surveyQuestion": surveyQuestion,
+          "surveyQuestions.$.surveyAnswers": surveyAnswers,
+          "surveyQuestions.$.active": active,
+          "surveyQuestions.$.color": color,
+          "surveyQuestions.$.responses": responses,
+        },
+      },
+      (err) => {
+        if (err) {
+          res.json({
+            message: "Survey Updation failed",
+            success: false,
+          });
+          return;
+        } else {
+          res.json({
+            message: "Survey Updation Successfully",
+            success: true,
+          });
+          return;
+        }
+      }
+    );
+  } else {
+    res.json({
+      success: false,
+      message: "Campaign Error somthing went wrong",
+    });
+    return;
+  }
+};
+
+const deleteSurvey = async (req, res) => {
+  console.log(req.body);
+
+  const { campaignId, campaignName, surveyId } = req.body;
+
+  if (campaignId && campaignName && surveyId) {
+    // let foundCampaignSurvey = await Survey.findOne({
+    //   campaignOwnerId: campaignId,
+    // });
+    // console.log(foundCampaignSurvey);
+
+    Survey.update(
+      {
+        campaignOwnerId: campaignId.toString(),
+      },
+      {
+        $pull: {
+          surveyQuestions: { surveyId: surveyId },
+        },
+      },
+      (err) => {
+        if (err) {
+          res.json({
+            message: "Survey Deletion failed",
+            success: false,
+          });
+          return;
+        } else {
+          res.json({
+            message: "Survey Deletion Successfully",
+            success: true,
+          });
+          return;
+        }
+      }
+    );
+  } else {
+    res.json({
+      success: false,
+      message: "Campaign Error somthing went wrong",
     });
     return;
   }
@@ -469,7 +579,7 @@ const connectSurveyToUser = async (req, res) => {
 
                             console.log(campaignFound);
 
-                            member = member.campaignJoined.map(
+                            member = member?.campaignJoined.map(
                               (memberCampaignJoined) => {
                                 if (
                                   memberCampaignJoined.campaignId.toString() ===
@@ -524,6 +634,7 @@ const connectSurveyToUser = async (req, res) => {
                                           ...tagsWithDetails,
                                         ],
                                         "voters.$.lastInfluenced": new Date(),
+                                        "voters.$.surveyed": true,
                                       },
                                     },
                                     async (err) => {
@@ -541,6 +652,11 @@ const connectSurveyToUser = async (req, res) => {
                                               "totalCalled"
                                             );
 
+                                          console.log(
+                                            recordFound,
+                                            "record found"
+                                          );
+
                                           Phonebank.updateOne(
                                             { _id: recordId },
                                             {
@@ -548,7 +664,8 @@ const connectSurveyToUser = async (req, res) => {
                                               $set: {
                                                 numbersLeft:
                                                   totalNumbers -
-                                                  recordFound?.totalCalled,
+                                                  recordFound?.totalCalled -
+                                                  1,
                                               },
                                             },
                                             (err) => {
@@ -713,6 +830,150 @@ const connectSurveyToUser = async (req, res) => {
   }
 };
 
+const doNotCall = async (req, res) => {
+  console.log(req.body);
+
+  const { listId, voterId, recordId } = req.body;
+
+  List.updateOne(
+    {
+      _id: listId,
+    },
+    {
+      $pull: {
+        voters: { _id: voterId },
+      },
+    },
+    async (err) => {
+      if (err) {
+        res.json({
+          message: "Voter removing Failed",
+          success: false,
+        });
+        return;
+      } else {
+        let recordFound = await Phonebank.findOne({ _id: recordId });
+
+        console.log(recordFound, "record found");
+
+        Phonebank.updateOne(
+          { _id: recordId },
+          {
+            $inc: { totalNumbers: -1 },
+            // $set: {
+            //   numbersLeft:
+            //     recordFound?.totalNumbers - (recordFound?.totalCalled - 1),
+            // },
+          },
+          (err) => {
+            if (err) {
+              console.log(err);
+              res.json({
+                success: false,
+                message: "Error Updating Phonebank Record",
+              });
+            } else {
+              // res.json({
+              //   success: true,
+              //   message: "Voter Data Updated",
+              // });
+              res.json({
+                message: "Voter removed from Record",
+                success: true,
+              });
+              return;
+            }
+          }
+        );
+      }
+    }
+  );
+};
+
+const wrongNumber = async (req, res) => {
+  console.log(req.body);
+  const { listId, voterId, wrongNumbers } = req.body;
+  List.updateOne(
+    {
+      _id: listId,
+      "voters._id": voterId,
+    },
+    {
+      $set: {
+        ...(wrongNumbers[0] && {
+          [`voters.$.${wrongNumbers[0]}`]: "Not Available",
+        }),
+        ...(wrongNumbers[1] && {
+          [`voters.$.${wrongNumbers[1]}`]: "Not Available",
+        }),
+      },
+    },
+    async (err) => {
+      if (err) {
+        console.log(err);
+        res.json({
+          success: false,
+          message: "Failed Updation",
+        });
+      } else {
+        Aristotle.updateOne(
+          { _id: voterId },
+          {
+            $set: {
+              ...(wrongNumbers[0] && {
+                [wrongNumbers[0]]: "Not Available",
+              }),
+              ...(wrongNumbers[1] && {
+                [wrongNumbers[1]]: "Not Available",
+              }),
+            },
+          },
+          (err) => {
+            if (err) {
+              console.log(err);
+              res.json({
+                success: false,
+                message: "Voter data updation failed",
+              });
+            } else {
+              res.json({ success: true, message: "Updated" });
+              return;
+            }
+          }
+        );
+      }
+    }
+  );
+};
+
+const saveInteraction = async (req, res) => {
+  console.log(req.body);
+  const { voterId, listId, interaction } = req.body;
+
+  List.updateOne(
+    {
+      _id: listId,
+      "voters._id": voterId,
+    },
+    {
+      $set: {
+        "voters.$.interaction": interaction,
+      },
+    },
+    async (err) => {
+      if (err) {
+        console.log(err);
+        res.json({
+          success: false,
+          message: "Failed Saving Interaction",
+        });
+      } else {
+        res.json({ success: true, message: "Interaction got Saved" });
+      }
+    }
+  );
+};
+
 const getCampaigns = async (req, res) => {
   const campaigns = await Survey.find({});
 
@@ -771,11 +1032,16 @@ const getClientSurvey = async (req, res) => {
 
 module.exports = {
   addSurvey,
+  editSurvey,
+  deleteSurvey,
   connectSurveyToUser,
+  doNotCall,
   getCampaigns,
   getClientSurvey,
   getCampaignSurveyResponses,
   getCampaignSurveys,
+  saveInteraction,
+  wrongNumber,
 };
 
 // const {

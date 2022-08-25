@@ -5,8 +5,13 @@ const surveyController = require("../controllers/survey-controllers");
 const router = express.Router();
 
 router.post("/addsurvey", surveyController.addSurvey);
+router.post("/editsurvey", surveyController.editSurvey);
+router.post("/deletesurvey", surveyController.deleteSurvey);
 router.post("/getclientsurvey", surveyController.getClientSurvey);
 router.post("/takesurvey", surveyController.connectSurveyToUser);
+router.post("/donotcall", surveyController.doNotCall);
+router.post("/wrongNumber", surveyController.wrongNumber);
+router.post("/saveinteraction", surveyController.saveInteraction);
 
 router.get("/getcampaigns", surveyController.getCampaigns);
 router.post("/getcampaignsurveys", surveyController.getCampaignSurveys);
