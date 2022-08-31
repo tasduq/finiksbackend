@@ -958,6 +958,7 @@ const saveInteraction = async (req, res) => {
     {
       $set: {
         "voters.$.interaction": interaction,
+        "voters.$.lastInfluenced": new Date(),
       },
     },
     async (err) => {

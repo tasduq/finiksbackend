@@ -23,6 +23,7 @@ router.post("/getsurvey", teammemberController.getSurvey);
 router.post("/newpassword", teammemberController.newPassword);
 router.post("/updatepassword", teammemberController.updateUserPassword);
 router.post("/addtoteam", teammemberController.addToTeam);
+router.post("/getinvitedvoters", teammemberController.getInvitedVoters);
 router.post("/updatevoterinfo", teammemberController.updateVoterInfo);
 // router.post("/getcampaigns", teammemberController.getCampaigns);
 // router.post("/updatecampaigndata", campaignController.updateCampaignData);

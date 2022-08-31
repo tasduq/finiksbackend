@@ -450,6 +450,7 @@ const saveRecord = async (req, res, next) => {
     list: selectedList,
     scriptName: selectedScript.scriptName,
     scriptId: selectedScript._id,
+    active: "Active",
   });
 
   try {
@@ -532,6 +533,7 @@ const updateRecord = async (req, res) => {
     selectedList,
     selectedScript,
     recordId,
+    active,
   } = req.body;
 
   let listTotalNumbers = await List2.findOne(
@@ -556,6 +558,7 @@ const updateRecord = async (req, res) => {
             list: selectedList,
             scriptName: selectedScript.scriptName,
             scriptId: selectedScript._id,
+            active: active,
           },
         },
         function (err) {

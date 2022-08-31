@@ -21,6 +21,7 @@ const campaignSchema = new Schema({
   campaignCode: { type: String },
   teamMembers: { type: Array },
   invitedTeamMembers: { type: Array },
+  invitedVoters: { type: Array },
   county: { type: Array },
   countyCommission: { type: Array },
   city: { type: Array },

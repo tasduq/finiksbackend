@@ -496,7 +496,7 @@ const sendInvite = async (req, res) => {
     campaignCode,
     campaignName,
     heading: "Campaign Joining Code",
-    message: `We are inviting you for joining our campaign. ${about}, login at https://www.finiksapp.com/logins`,
+    message: `We are inviting you for joining our campaign. ${about}, login at http://www.finiksapp.com/logins`,
   });
 
   const campaignFound = await Campaign.findOne(
@@ -553,31 +553,78 @@ const addToTeam = async (req, res) => {
   console.log(req.body);
   const { email, campaignId } = req.body;
 
-  const campaignData = await Campaign.findOne({ _id: campaignId }, [
-    "email",
-    "campaignName",
-  ]);
-  console.log(campaignData);
+  console.log(req.body);
 
-  if (campaignData) {
-    sendEmail.sendEmail({
-      // firstName,
-      // lastName,
-      email,
-      campaignCode: "",
-      campaignName: campaignData.campaignName,
-      heading: "",
-      message: `You can send an email to campaign manager for joining the campaign. Here is the campaign Manager email ${campaignData?.email}`,
+  const campaignFound = await Campaign.findOne(
+    { _id: campaignId },
+    "invitedVoters"
+  );
+
+  let yoo = campaignFound.invitedVoters;
+  console.log(yoo, "yoo1");
+  yoo = yoo.filter((subYoo) => subYoo.email !== email);
+  console.log(yoo, "yoo1");
+  yoo = [...yoo, { email }];
+  console.log(yoo, "yoo1");
+
+  try {
+    let ad = Campaign.updateOne(
+      { _id: campaignId },
+
+      {
+        $set: {
+          invitedVoters: yoo,
+        },
+      },
+      function (err) {
+        console.log(err);
+        if (err) {
+          res.json({
+            success: false,
+            message: "Something went wrong",
+          });
+          return;
+        } else {
+          res.json({
+            success: true,
+            message: "Voter Invited",
+          });
+          return;
+        }
+      }
+    );
+
+    console.log("done");
+  } catch (err) {
+    console.log(err);
+    res.json({
+      success: false,
+      message: "Something went wrong",
     });
+    return;
+  }
+};
 
+const getInvitedVoters = async (req, res) => {
+  console.log(req.body);
+
+  const { campaignId } = req.body;
+
+  const campaignFound = await Campaign.findOne(
+    { _id: campaignId },
+    "invitedVoters"
+  );
+
+  if (campaignFound) {
     res.json({
       success: true,
-      message: "Invited Successfully",
+      message: "Found Invited Voters",
+      invitedVoters: campaignFound.invitedVoters,
     });
   } else {
     res.json({
       success: false,
-      message: "Somthing Went Wrong",
+      message: "Something went wrong",
     });
   }
 };
@@ -604,7 +651,7 @@ const editMember = async (req, res) => {
     campaignCode,
     campaignName,
     heading: "Campaign Joining Code",
-    message: `Your campaign Access Status updated. Now you access level is ${permission?.toUpperCase()} and your active status is ${permission?.toUpperCase()}, login at https://www.finiksapp.com/logins`,
+    message: `Your campaign Access Status updated. Now you access level is ${permission?.toUpperCase()} and your active status is ${permission?.toUpperCase()}, login at http://www.finiksapp.com/logins`,
   });
 
   const campaignFound = await Campaign.findOne(
@@ -1142,4 +1189,5 @@ module.exports = {
   editMember,
   addToTeam,
   updateVoterInfo,
+  getInvitedVoters,
 };

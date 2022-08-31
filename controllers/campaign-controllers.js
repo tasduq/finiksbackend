@@ -101,7 +101,7 @@ const register = async (req, res, next) => {
             campaignCode: "Your Campaign Got Registered at Finiks Platform",
             campaignName: campaignName,
             heading: "Campaign Joining",
-            message: `We Have Registered Your Campaign at Finiks Platform. You can Login at  https://www.finiksapp.com/logins  and here are the login Details, Email : ${email} and Password : ${password}`,
+            message: `We Have Registered Your Campaign at Finiks Platform. You can Login at  http://www.finiksapp.com/logins  and here are the login Details, Email : ${email} and Password : ${password}`,
           });
           res.json({
             message: "Campaign Registered",
