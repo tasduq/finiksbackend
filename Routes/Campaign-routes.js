@@ -11,6 +11,7 @@ router.post("/getcampaigndata", campaignController.getCampaignData);
 router.post("/getcampaignfilterdata", campaignController.getCampaignFilterData);
 router.get("/getnewcode", campaignController.getNewCode);
 router.post("/getteammembers", campaignController.getTeamMembers);
+router.post("/getteamadmin", campaignController.getTeamAdmin);
 router.post(
   "/getcampaignteammembers",
   campaignController.getCampaignTeammembers

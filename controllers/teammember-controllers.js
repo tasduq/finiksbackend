@@ -962,6 +962,22 @@ const getTags = async (req, res) => {
   }
 };
 
+const getAdminTags = async (req, res) => {
+  console.log(req.body);
+  const { id } = req.body;
+
+  const tags = await Tags.find({ type: "admin" });
+  console.log(tags);
+  if (tags) {
+    res.json({
+      success: true,
+      tags: tags,
+    });
+  } else {
+    res.json({ success: false, message: "Tags not found for the campaign" });
+  }
+};
+
 const getSurvey = async (req, res) => {
   console.log(req.body);
 
@@ -1183,6 +1199,7 @@ module.exports = {
   getList,
   getScript,
   getTags,
+  getAdminTags,
   getSurvey,
   newPassword,
   updateUserPassword,

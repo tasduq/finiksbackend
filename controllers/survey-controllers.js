@@ -297,21 +297,27 @@ const connectSurveyToUser = async (req, res) => {
     totalNumbers,
   } = req.body;
 
-  let tagsWithDetails = tags.map((tag) => {
-    return {
-      ...tag,
-      recordType,
-      geoLocation,
-      date,
-      time,
-      subUserName,
-      subUserId,
-      campaignId,
-      campaignName,
-      voterId,
-      voterName,
-    };
-  });
+  let tagsWithDetails;
+
+  if (tags.length > 0) {
+    tagsWithDetails = tags?.map((tag) => {
+      return {
+        ...tag,
+        recordType,
+        geoLocation,
+        date,
+        time,
+        subUserName,
+        subUserId,
+        campaignId,
+        campaignName,
+        voterId,
+        voterName,
+      };
+    });
+  } else {
+    tagsWithDetails = [];
+  }
 
   console.log(tagsWithDetails);
 
@@ -497,207 +503,378 @@ const connectSurveyToUser = async (req, res) => {
                 //   lastInfluenced: new Date(),
                 // },
               },
-              (err) => {
+              async (err) => {
                 if (err) {
                   res.json({
                     success: false,
                     message: "Something went wrong",
                   });
                 } else {
-                  tagsWithDetails.map((tag, i) => {
-                    Tag.updateOne(
-                      { _id: tag.tagId },
+                  if (tagsWithDetails.length > 0) {
+                    tagsWithDetails.map((tag, i) => {
+                      Tag.updateOne(
+                        { _id: tag.tagId },
 
-                      {
-                        $push: {
-                          users: tag,
+                        {
+                          $push: {
+                            users: tag,
+                          },
                         },
+                        async function (err, updatedTag) {
+                          console.log(err);
+                          if (err) {
+                            res.json({
+                              success: false,
+                              message: "Something went wrong",
+                            });
+                            return;
+                          } else {
+                            if (i === tagsWithDetails.length - 1) {
+                              let member = await Team.findOne(
+                                { _id: subUserId },
+                                "campaignJoined"
+                              );
+                              console.log(member);
+
+                              let campaignFound = member?.campaignJoined?.find(
+                                (campaign) =>
+                                  campaign.campaignId.toString() ===
+                                  campaignId.toString()
+                              );
+
+                              // if(campaignFound){
+
+                              // }
+
+                              campaignFound = {
+                                ...campaignFound,
+                                votersInfluenced:
+                                  actions?.votersInfluenced === true
+                                    ? campaignFound?.votersInfluenced + 1
+                                    : campaignFound?.votersInfluenced
+                                    ? campaignFound?.votersInfluenced
+                                    : 0,
+
+                                doorsKnocked:
+                                  actions?.doorsKnocked === true
+                                    ? campaignFound?.doorsKnocked + 1
+                                    : campaignFound?.doorsKnocked
+                                    ? campaignFound?.doorsKnocked
+                                    : 0,
+
+                                votersSurveyed:
+                                  actions?.votersSurveyed === true
+                                    ? campaignFound?.votersSurveyed + 1
+                                    : campaignFound?.votersSurveyed
+                                    ? campaignFound?.votersSurveyed
+                                    : 0,
+
+                                votersMessaged:
+                                  actions?.votersMessaged === true
+                                    ? campaignFound?.votersMessaged + 1
+                                    : campaignFound?.votersMessaged
+                                    ? campaignFound?.votersMessaged
+                                    : 0,
+
+                                phonesCalled:
+                                  actions?.phonesCalled === true
+                                    ? campaignFound?.phonesCalled + 1
+                                    : campaignFound?.phonesCalled
+                                    ? campaignFound?.phonesCalled
+                                    : 0,
+                              };
+
+                              console.log(campaignFound);
+
+                              member = member?.campaignJoined.map(
+                                (memberCampaignJoined) => {
+                                  if (
+                                    memberCampaignJoined.campaignId.toString() ===
+                                    campaignId.toString()
+                                  ) {
+                                    console.log("in iffff");
+                                    return campaignFound;
+                                  } else {
+                                    console.log("in elseee");
+                                    return memberCampaignJoined;
+                                  }
+                                }
+                              );
+
+                              console.log(member);
+
+                              Team.updateOne(
+                                {
+                                  _id: subUserId,
+                                },
+                                {
+                                  $set: { campaignJoined: member },
+                                },
+                                async (err) => {
+                                  if (err) {
+                                    res.json({
+                                      success: false,
+                                      message: "Voter Data Updation failed",
+                                    });
+                                  } else {
+                                    let listFound = await List.findOne({
+                                      _id: list,
+                                    });
+                                    console.log(listFound);
+                                    let voterFound = listFound?.voters?.find(
+                                      (voter) => voter._id === voterId
+                                    );
+                                    console.log(
+                                      voterFound,
+                                      "voterFound",
+                                      tagsWithDetails
+                                    );
+                                    List.update(
+                                      {
+                                        _id: list,
+                                        "voters._id": voterId,
+                                      },
+                                      {
+                                        $set: {
+                                          "voters.$.voterTags": [
+                                            ...voterFound?.voterTags,
+                                            ...tagsWithDetails,
+                                          ],
+                                          "voters.$.lastInfluenced": new Date(),
+                                          "voters.$.surveyed": true,
+                                        },
+                                      },
+                                      async (err) => {
+                                        if (err) {
+                                          console.log(err);
+                                          res.json({
+                                            success: false,
+                                            message:
+                                              "Error Updating Voter Tags",
+                                          });
+                                        } else {
+                                          if (recordType === "phonebanking") {
+                                            let recordFound =
+                                              await Phonebank.findOne(
+                                                { _id: recordId },
+                                                "totalCalled"
+                                              );
+
+                                            console.log(
+                                              recordFound,
+                                              "record found"
+                                            );
+
+                                            Phonebank.updateOne(
+                                              { _id: recordId },
+                                              {
+                                                $inc: { totalCalled: 1 },
+                                                $set: {
+                                                  numbersLeft:
+                                                    totalNumbers -
+                                                    recordFound?.totalCalled -
+                                                    1,
+                                                },
+                                              },
+                                              (err) => {
+                                                if (err) {
+                                                  console.log(err);
+                                                  res.json({
+                                                    success: false,
+                                                    message:
+                                                      "Error Updating Phonebank Record",
+                                                  });
+                                                } else {
+                                                  res.json({
+                                                    success: true,
+                                                    message:
+                                                      "Voter Data Updated",
+                                                  });
+                                                }
+                                              }
+                                            );
+                                          }
+                                        }
+                                      }
+                                    );
+                                  }
+                                }
+                              );
+
+                              // console.log(updatedTag);
+                            }
+                          }
+                        }
+                      );
+                    });
+                  } else {
+                    // if (i === tagsWithDetails.length - 1) {
+                    let member = await Team.findOne(
+                      { _id: subUserId },
+                      "campaignJoined"
+                    );
+                    console.log(member);
+
+                    let campaignFound = member?.campaignJoined?.find(
+                      (campaign) =>
+                        campaign.campaignId.toString() === campaignId.toString()
+                    );
+
+                    // if(campaignFound){
+
+                    // }
+
+                    campaignFound = {
+                      ...campaignFound,
+                      votersInfluenced:
+                        actions?.votersInfluenced === true
+                          ? campaignFound?.votersInfluenced + 1
+                          : campaignFound?.votersInfluenced
+                          ? campaignFound?.votersInfluenced
+                          : 0,
+
+                      doorsKnocked:
+                        actions?.doorsKnocked === true
+                          ? campaignFound?.doorsKnocked + 1
+                          : campaignFound?.doorsKnocked
+                          ? campaignFound?.doorsKnocked
+                          : 0,
+
+                      votersSurveyed:
+                        actions?.votersSurveyed === true
+                          ? campaignFound?.votersSurveyed + 1
+                          : campaignFound?.votersSurveyed
+                          ? campaignFound?.votersSurveyed
+                          : 0,
+
+                      votersMessaged:
+                        actions?.votersMessaged === true
+                          ? campaignFound?.votersMessaged + 1
+                          : campaignFound?.votersMessaged
+                          ? campaignFound?.votersMessaged
+                          : 0,
+
+                      phonesCalled:
+                        actions?.phonesCalled === true
+                          ? campaignFound?.phonesCalled + 1
+                          : campaignFound?.phonesCalled
+                          ? campaignFound?.phonesCalled
+                          : 0,
+                    };
+
+                    console.log(campaignFound);
+
+                    member = member?.campaignJoined.map(
+                      (memberCampaignJoined) => {
+                        if (
+                          memberCampaignJoined.campaignId.toString() ===
+                          campaignId.toString()
+                        ) {
+                          console.log("in iffff");
+                          return campaignFound;
+                        } else {
+                          console.log("in elseee");
+                          return memberCampaignJoined;
+                        }
+                      }
+                    );
+
+                    console.log(member);
+
+                    Team.updateOne(
+                      {
+                        _id: subUserId,
                       },
-                      async function (err, updatedTag) {
-                        console.log(err);
+                      {
+                        $set: { campaignJoined: member },
+                      },
+                      async (err) => {
                         if (err) {
                           res.json({
                             success: false,
-                            message: "Something went wrong",
+                            message: "Voter Data Updation failed",
                           });
-                          return;
                         } else {
-                          if (i === tagsWithDetails.length - 1) {
-                            let member = await Team.findOne(
-                              { _id: subUserId },
-                              "campaignJoined"
-                            );
-                            console.log(member);
-
-                            let campaignFound = member?.campaignJoined?.find(
-                              (campaign) =>
-                                campaign.campaignId.toString() ===
-                                campaignId.toString()
-                            );
-
-                            // if(campaignFound){
-
-                            // }
-
-                            campaignFound = {
-                              ...campaignFound,
-                              votersInfluenced:
-                                actions?.votersInfluenced === true
-                                  ? campaignFound?.votersInfluenced + 1
-                                  : campaignFound?.votersInfluenced
-                                  ? campaignFound?.votersInfluenced
-                                  : 0,
-
-                              doorsKnocked:
-                                actions?.doorsKnocked === true
-                                  ? campaignFound?.doorsKnocked + 1
-                                  : campaignFound?.doorsKnocked
-                                  ? campaignFound?.doorsKnocked
-                                  : 0,
-
-                              votersSurveyed:
-                                actions?.votersSurveyed === true
-                                  ? campaignFound?.votersSurveyed + 1
-                                  : campaignFound?.votersSurveyed
-                                  ? campaignFound?.votersSurveyed
-                                  : 0,
-
-                              votersMessaged:
-                                actions?.votersMessaged === true
-                                  ? campaignFound?.votersMessaged + 1
-                                  : campaignFound?.votersMessaged
-                                  ? campaignFound?.votersMessaged
-                                  : 0,
-
-                              phonesCalled:
-                                actions?.phonesCalled === true
-                                  ? campaignFound?.phonesCalled + 1
-                                  : campaignFound?.phonesCalled
-                                  ? campaignFound?.phonesCalled
-                                  : 0,
-                            };
-
-                            console.log(campaignFound);
-
-                            member = member?.campaignJoined.map(
-                              (memberCampaignJoined) => {
-                                if (
-                                  memberCampaignJoined.campaignId.toString() ===
-                                  campaignId.toString()
-                                ) {
-                                  console.log("in iffff");
-                                  return campaignFound;
-                                } else {
-                                  console.log("in elseee");
-                                  return memberCampaignJoined;
-                                }
-                              }
-                            );
-
-                            console.log(member);
-
-                            Team.updateOne(
-                              {
-                                _id: subUserId,
+                          let listFound = await List.findOne({
+                            _id: list,
+                          });
+                          console.log(listFound);
+                          let voterFound = listFound?.voters?.find(
+                            (voter) => voter._id === voterId
+                          );
+                          console.log(
+                            voterFound,
+                            "voterFound",
+                            tagsWithDetails
+                          );
+                          List.update(
+                            {
+                              _id: list,
+                              "voters._id": voterId,
+                            },
+                            {
+                              $set: {
+                                "voters.$.voterTags": [
+                                  ...voterFound?.voterTags,
+                                  ...tagsWithDetails,
+                                ],
+                                "voters.$.lastInfluenced": new Date(),
+                                "voters.$.surveyed": true,
                               },
-                              {
-                                $set: { campaignJoined: member },
-                              },
-                              async (err) => {
-                                if (err) {
-                                  res.json({
-                                    success: false,
-                                    message: "Voter Data Updation failed",
-                                  });
-                                } else {
-                                  let listFound = await List.findOne({
-                                    _id: list,
-                                  });
-                                  console.log(listFound);
-                                  let voterFound = listFound?.voters?.find(
-                                    (voter) => voter._id === voterId
+                            },
+                            async (err) => {
+                              if (err) {
+                                console.log(err);
+                                res.json({
+                                  success: false,
+                                  message: "Error Updating Voter Tags",
+                                });
+                              } else {
+                                if (recordType === "phonebanking") {
+                                  let recordFound = await Phonebank.findOne(
+                                    { _id: recordId },
+                                    "totalCalled"
                                   );
-                                  console.log(
-                                    voterFound,
-                                    "voterFound",
-                                    tagsWithDetails
-                                  );
-                                  List.update(
+
+                                  console.log(recordFound, "record found");
+
+                                  Phonebank.updateOne(
+                                    { _id: recordId },
                                     {
-                                      _id: list,
-                                      "voters._id": voterId,
-                                    },
-                                    {
+                                      $inc: { totalCalled: 1 },
                                       $set: {
-                                        "voters.$.voterTags": [
-                                          ...voterFound?.voterTags,
-                                          ...tagsWithDetails,
-                                        ],
-                                        "voters.$.lastInfluenced": new Date(),
-                                        "voters.$.surveyed": true,
+                                        numbersLeft:
+                                          totalNumbers -
+                                          recordFound?.totalCalled -
+                                          1,
                                       },
                                     },
-                                    async (err) => {
+                                    (err) => {
                                       if (err) {
                                         console.log(err);
                                         res.json({
                                           success: false,
-                                          message: "Error Updating Voter Tags",
+                                          message:
+                                            "Error Updating Phonebank Record",
                                         });
                                       } else {
-                                        if (recordType === "phonebanking") {
-                                          let recordFound =
-                                            await Phonebank.findOne(
-                                              { _id: recordId },
-                                              "totalCalled"
-                                            );
-
-                                          console.log(
-                                            recordFound,
-                                            "record found"
-                                          );
-
-                                          Phonebank.updateOne(
-                                            { _id: recordId },
-                                            {
-                                              $inc: { totalCalled: 1 },
-                                              $set: {
-                                                numbersLeft:
-                                                  totalNumbers -
-                                                  recordFound?.totalCalled -
-                                                  1,
-                                              },
-                                            },
-                                            (err) => {
-                                              if (err) {
-                                                console.log(err);
-                                                res.json({
-                                                  success: false,
-                                                  message:
-                                                    "Error Updating Phonebank Record",
-                                                });
-                                              } else {
-                                                res.json({
-                                                  success: true,
-                                                  message: "Voter Data Updated",
-                                                });
-                                              }
-                                            }
-                                          );
-                                        }
+                                        res.json({
+                                          success: true,
+                                          message: "Voter Data Updated",
+                                        });
                                       }
                                     }
                                   );
                                 }
                               }
-                            );
-
-                            // console.log(updatedTag);
-                          }
+                            }
+                          );
                         }
                       }
                     );
-                  });
+
+                    // console.log(updatedTag);
+                  }
                 }
               }
             );

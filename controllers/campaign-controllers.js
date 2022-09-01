@@ -619,6 +619,21 @@ const getTeamMembers = async (req, res) => {
   }
 };
 
+const getTeamAdmin = async (req, res) => {
+  console.log(req.body, "heloooo");
+  const teamAdmin = await Campaign.findOne({ _id: req.body.campaignId }, [
+    "campaignName",
+    "startDate",
+    "email",
+  ]);
+
+  if (teamAdmin) {
+    res.json({ success: true, team: teamAdmin, message: "Team Admin Found" });
+  } else {
+    res.json({ success: false, message: "Admin Not found" });
+  }
+};
+
 const getCampaignTeammembers = async (req, res) => {
   console.log(req.body);
 
@@ -660,6 +675,7 @@ module.exports = {
   getNewCode,
   getCampaignData,
   getTeamMembers,
+  getTeamAdmin,
   getCampaignTeammembers,
   getCampaignFilterData,
   updateProfile,

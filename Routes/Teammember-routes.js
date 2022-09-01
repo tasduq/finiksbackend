@@ -19,6 +19,7 @@ router.post("/newotp", teammemberController.requestNewEmailOtp);
 router.post("/getlist", teammemberController.getList);
 router.post("/getscript", teammemberController.getScript);
 router.post("/gettags", teammemberController.getTags);
+router.get("/getadmintags", teammemberController.getAdminTags);
 router.post("/getsurvey", teammemberController.getSurvey);
 router.post("/newpassword", teammemberController.newPassword);
 router.post("/updatepassword", teammemberController.updateUserPassword);
