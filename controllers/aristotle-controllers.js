@@ -141,8 +141,13 @@ const addAristotleData = async (req, res) => {
     },
   });
 
-  // console.log(result);
-  let saveVoter = [...result.Sheet1];
+  console.log(result);
+  if (!result.sheet1) {
+    console.log("Convert Sheet name to sheet1");
+    res.json({ succes: false, message: "Convert Sheet name to sheet1" });
+    return;
+  }
+  let saveVoter = [...result.sheet1];
   saveVoter.splice(0, 1);
   // console.log(saveVoter);
   // filter = { 'API_ID'}
