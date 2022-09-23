@@ -22,6 +22,7 @@ const register = async (req, res, next) => {
     try {
       existingTeammember = await Teammember.findOne({ email: email });
       existingCampaign = await Campaign.findOne({ email: email });
+      console.log(existingCampaign);
 
       if (existingTeammember) {
         console.log("Teammember already exists");
@@ -296,7 +297,7 @@ const login = async (req, res, next) => {
   if (!existingUser) {
     res.json({
       success: false,
-      message: "Logging in failed, please try again later.",
+      message: "User not found",
     });
 
     return;
@@ -364,7 +365,7 @@ const login = async (req, res, next) => {
     teamLogin: true,
     phoneNumber: existingUser.phoneNumber,
     address: existingUser.address,
-    campaigns: campaignsJoined,
+    campaigns: existingUser.campaignJoined,
   });
 };
 
