@@ -629,7 +629,7 @@ const connectSurveyToUser = async (req, res) => {
                                       "voterFound",
                                       tagsWithDetails
                                     );
-                                    List.update(
+                                    List.updateOne(
                                       {
                                         _id: list,
                                         "voters._id": voterId,
@@ -642,6 +642,7 @@ const connectSurveyToUser = async (req, res) => {
                                           ],
                                           "voters.$.lastInfluenced": new Date(),
                                           "voters.$.surveyed": true,
+                                          "voters.$.voterDone": true,
                                         },
                                       },
                                       async (err) => {
@@ -807,7 +808,7 @@ const connectSurveyToUser = async (req, res) => {
                             "voterFound",
                             tagsWithDetails
                           );
-                          List.update(
+                          List.updateOne(
                             {
                               _id: list,
                               "voters._id": voterId,
@@ -820,6 +821,7 @@ const connectSurveyToUser = async (req, res) => {
                                 ],
                                 "voters.$.lastInfluenced": new Date(),
                                 "voters.$.surveyed": true,
+                                "voters.$.voterDone": true,
                               },
                             },
                             async (err) => {
@@ -1136,6 +1138,7 @@ const saveInteraction = async (req, res) => {
       $set: {
         "voters.$.interaction": interaction,
         "voters.$.lastInfluenced": new Date(),
+        "voters.$.voterDone": true,
       },
     },
     async (err) => {
@@ -1146,7 +1149,30 @@ const saveInteraction = async (req, res) => {
           message: "Failed Saving Interaction",
         });
       } else {
+        // List.updateOne(
+        //   {
+        //     _id: listId,
+        //   },
+        //   {
+        //     $pull: {
+        //       voters: { _id: voterId },
+        //     },
+        //   },
+        //   (err) => {
+        //     if (err) {
+        //       res.json({
+        //         success: false,
+        //         message: "Failed Saving Interaction",
+        //       });
+        //       return;
+        //     } else {
+        //       res.json({ success: true, message: "Interaction got Saved" });
+        //       return;
+        //     }
+        //   }
+        // );
         res.json({ success: true, message: "Interaction got Saved" });
+        return;
       }
     }
   );
