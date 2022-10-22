@@ -25,7 +25,12 @@ router.post("/newpassword", teammemberController.newPassword);
 router.post("/updatepassword", teammemberController.updateUserPassword);
 router.post("/addtoteam", teammemberController.addToTeam);
 router.post("/getinvitedvoters", teammemberController.getInvitedVoters);
+router.post(
+  "/getinvitedteammembers",
+  teammemberController.getInvitedTeamMembers
+);
 router.post("/updatevoterinfo", teammemberController.updateVoterInfo);
+router.post("/cancelinvite", teammemberController.cancelInvite);
 // router.post("/getcampaigns", teammemberController.getCampaigns);
 // router.post("/updatecampaigndata", campaignController.updateCampaignData);
 // router.post("/getcampaigndata", campaignController.getCampaignData);
