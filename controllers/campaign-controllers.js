@@ -25,7 +25,7 @@ const register = async (req, res, next) => {
   } = req.body;
   // console.log(req.body);
 
-  if (campaignName && email && password) {
+  if (campaignName && email) {
     let existingCampaign;
     try {
       existingCampaign = await Campaign.findOne({ campaignName: campaignName });

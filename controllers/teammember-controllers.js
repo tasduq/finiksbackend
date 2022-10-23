@@ -474,7 +474,7 @@ const newPassword = async (req, res) => {
 };
 
 const sendInvite = async (req, res) => {
-  console.log(req.body);
+  console.log(req.body, "i am body");
   const {
     // firstName,
     // lastName,
@@ -504,6 +504,8 @@ const sendInvite = async (req, res) => {
     { _id: campaignId },
     "invitedTeamMembers"
   );
+
+  console.log(campaignFound, "i am foundcampaign");
 
   let yoo = campaignFound.invitedTeamMembers;
   console.log(yoo, "yoo1");
@@ -551,7 +553,7 @@ const sendInvite = async (req, res) => {
 };
 
 const addToTeam = async (req, res) => {
-  console.log(req.body);
+  console.log(req.body, "i am body");
   const { email, campaignId } = req.body;
 
   console.log(req.body);
