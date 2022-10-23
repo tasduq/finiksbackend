@@ -474,7 +474,7 @@ const newPassword = async (req, res) => {
 };
 
 const sendInvite = async (req, res) => {
-  console.log(req.body, "i am body");
+  console.log(req.body, "i am body sendinvite");
   const {
     // firstName,
     // lastName,
@@ -485,14 +485,13 @@ const sendInvite = async (req, res) => {
     campaignPosition,
     image,
     about,
+    inviterEmail,
     campaignId,
     campaignCode,
     campaignName,
   } = req.body;
 
   sendEmail.sendEmail({
-    // firstName,
-    // lastName,
     email,
     campaignCode,
     campaignName,
@@ -511,7 +510,7 @@ const sendInvite = async (req, res) => {
   console.log(yoo, "yoo1");
   yoo = yoo.filter((subYoo) => subYoo.email !== email);
   console.log(yoo, "yoo1");
-  yoo = [...yoo, { email, permission, campaignPosition }];
+  yoo = [...yoo, { email, permission, campaignPosition, inviterEmail }];
   console.log(yoo, "yoo1");
 
   try {
@@ -549,6 +548,58 @@ const sendInvite = async (req, res) => {
       message: "Something went wrong",
     });
     return;
+  }
+};
+
+const getInvitedTeamMembers = async (req, res) => {
+  console.log(req.body);
+
+  const { campaignId } = req.body;
+
+  const campaignFound = await Campaign.findOne(
+    { _id: campaignId },
+    "invitedTeamMembers"
+  );
+
+  if (campaignFound) {
+    res.json({
+      success: true,
+      message: "Found Invited Team members",
+      invitedTeamMembers: campaignFound.invitedTeamMembers,
+    });
+  } else {
+    res.json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
+};
+
+const cancelInvite = async (req, res) => {
+  console.log(req.body, "i am body cancel invite");
+  const { email, campaignId } = req.body;
+  try {
+    Campaign.updateOne(
+      { _id: campaignId },
+      { $pull: { invitedTeamMembers: { email: email } } },
+      (err) => {
+        if (err) {
+          console.log(err);
+          throw new Error("Error canceling invote and updating data");
+        } else {
+          res.json({
+            success: true,
+            message: "Voter invite canceled",
+          });
+        }
+      }
+    );
+  } catch (err) {
+    console.log(err);
+    res.json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
@@ -776,11 +827,18 @@ const joinCampaign = async (req, res) => {
     });
 
     if (invited) {
+      let remainingInvitedMembers = campaignFound.invitedTeamMembers.filter(
+        (member) => {
+          return member.email !== email;
+        }
+      );
+      console.log(remainingInvitedMembers, "we are remaining");
       try {
         let ad = Campaign.updateOne(
           { _id: campaignFound._id },
 
           {
+            $set: { invitedTeamMembers: remainingInvitedMembers },
             $push: {
               teamMembers: {
                 ...invitedMember,
@@ -1210,4 +1268,6 @@ module.exports = {
   addToTeam,
   updateVoterInfo,
   getInvitedVoters,
+  getInvitedTeamMembers,
+  cancelInvite,
 };
