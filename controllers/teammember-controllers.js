@@ -684,7 +684,7 @@ const getInvitedVoters = async (req, res) => {
 };
 
 const editMember = async (req, res) => {
-  console.log(req.body, "body");
+  console.log(req.body, "i am body member");
   const {
     // firstName,
     // lastName,
