@@ -1,4 +1,5 @@
 const Aristotle = require("../Models/Aristotledata");
+const FiniksData = require("../Models/Finiksdata");
 const List = require("../Models/Canvassinglist");
 const List2 = require("../Models/List");
 const Campaign = require("../Models/Campaign");
@@ -579,6 +580,162 @@ const deleteList = async (req, res) => {
   }
 };
 
+const searchVoter = async (req, res) => {
+  console.log(req.body);
+  const filters = req.body;
+  // const fullName = new RegExp(`.*${name.split(" ").join(".*")}.*`, "i");
+  // console.log("i am fullname", fullName);
+
+  try {
+    let foundVoters = [];
+
+    let pipeLine = [
+      {
+        $search: {
+          compound: {
+            filter: [
+              filters.FIRSTNAME && {
+                text: {
+                  query: filters.FIRSTNAME,
+                  path: "FIRSTNAME",
+                },
+              },
+              filters.STATE && {
+                text: {
+                  query: filters.STATE,
+                  path: "STATE",
+                },
+              },
+              filters.CITY && {
+                text: {
+                  query: filters.CITY,
+                  path: "CITY",
+                },
+              },
+              filters.AI_COUNTY_NAME && {
+                text: {
+                  query: filters.AI_COUNTY_NAME,
+                  path: "AI_COUNTY_NAME",
+                },
+              },
+              filters.ADDRESS && {
+                text: {
+                  query: filters.ADDRESS,
+                  path: "ADDRESS",
+                },
+              },
+            ],
+          },
+        },
+      },
+    ];
+
+    console.log(pipeLine[0], "i am pure pipeline");
+
+    const yoo = pipeLine[0].$search.compound.filter.filter((subFilter) => {
+      // console.log(subFilter);
+      return subFilter !== undefined;
+    });
+    console.log(yoo);
+
+    pipeLine[0].$search.compound.filter = yoo;
+    console.log(pipeLine[0].$search.compound.filter, "i am pipe");
+
+    const results = Aristotle.collection.aggregate(pipeLine);
+    console.log(results, "i am results");
+    let count = 0;
+
+    let voters = [];
+
+    await results.forEach((voter) => {
+      voters.push(voter);
+    });
+    console.log();
+    foundVoters = voters;
+
+    //Code to use if adam dont like pipeline method
+    // if (searchType === "byName") {
+    // foundVoters = await FiniksData.find({
+    //   $or: [
+    //     { FIRSTNAME: { $regex: fullName } },
+    //     { LASTNAME: { $regex: fullName } },
+    //   ],
+    // });
+    // }
+
+    // if (searchType === "byLocation") {
+    //   // foundVoters = await FiniksData.find({
+    //   //   $or: [
+    //   //     {
+    //   //       CITY: { $regex: fullName },
+    //   //       ADDRESS: { $regex: fullName },
+    //   //       MUNICIPALITY: { $regex: fullName },
+    //   //       AI_COUNTY_NAME: { $regex: fullName },
+    //   //     },
+    //   //   ],
+    //   // });
+    // }
+
+    //bylist
+
+    // if(searchType ==='byLocation'){
+    //   foundVoters = await FiniksData.find({
+    //     $or: [
+    //       { FIRSTNAME: { $regex: fullName } },
+    //     ],
+    //   });
+    // }
+
+    console.log(foundVoters, "i am foundvotrs");
+    res.json({
+      success: true,
+      foundVoters: foundVoters,
+    });
+  } catch (err) {
+    console.log(err, "i am error");
+    res.json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
+};
+
+const searchCanvassingList = async (req, res) => {
+  console.log(req.body, "i am body");
+
+  const { listName, campaignId } = req.body;
+  const fullName = new RegExp(`.*${listName.split(" ").join(".*")}.*`, "i");
+  console.log("i am fullname", fullName);
+  let foundList = [];
+  if (listName && campaignId) {
+    try {
+      foundList = await List.find({
+        $and: [
+          { recordName: { $regex: fullName } },
+          { campaignOwnerId: campaignId },
+        ],
+      });
+      console.log(foundList, "i am found list");
+      res.json({
+        success: true,
+        message: "Lists Found",
+        foundLists: foundList,
+      });
+    } catch (err) {
+      console.log(err);
+      res.json({
+        success: false,
+        message: "Something went wrong",
+      });
+    }
+  } else {
+    res.json({
+      success: false,
+      message: "Something went wrong. Some data is missing",
+    });
+  }
+};
+
 module.exports = {
   queryCanvassing,
   saveList,
@@ -590,4 +747,6 @@ module.exports = {
   saveRecord,
   getRecords,
   updateRecord,
+  searchVoter,
+  searchCanvassingList,
 };

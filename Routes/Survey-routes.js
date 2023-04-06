@@ -9,6 +9,10 @@ router.post("/editsurvey", surveyController.editSurvey);
 router.post("/deletesurvey", surveyController.deleteSurvey);
 router.post("/getclientsurvey", surveyController.getClientSurvey);
 router.post("/takesurvey", surveyController.connectSurveyToUser);
+router.post(
+  "/takeSurveyCanvassingSinglePerson",
+  surveyController.takeSurveyCanvassingSinglePerson
+);
 router.post("/donotcall", surveyController.doNotCall);
 router.post("/wrongNumber", surveyController.wrongNumber);
 router.post("/saveinteraction", surveyController.saveInteraction);

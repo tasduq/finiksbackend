@@ -17,5 +17,10 @@ router.post(
 router.post("/updatelist", canvassingController.updateList);
 router.post("/editlist", canvassingController.editList);
 router.post("/deletelist", canvassingController.deleteList);
+router.post("/searchvotersforcanvassing", canvassingController.searchVoter);
+router.post(
+  "/searchcanvassinglists",
+  canvassingController.searchCanvassingList
+);
 
 module.exports = router;
