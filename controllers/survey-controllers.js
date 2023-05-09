@@ -1,5 +1,6 @@
 const Survey = require("../Models/Survey");
 const Campaignsurvey = require("../Models/Campaignsurveys");
+const Canvassedvotersbycampaign = require("../Models/Canvassedvotersbycampaigns");
 const Voter = require("../Models/Finiksdata");
 const Aristotle = require("../Models/Aristotledata");
 const Tag = require("../Models/Tag");
@@ -1012,7 +1013,7 @@ const connectSurveyToUser = async (req, res) => {
 
 //this is survey taking with canvassing of single person search
 const takeSurveyCanvassingSinglePerson = async (req, res) => {
-  console.log(req.body);
+  console.log(req.body, "singleperson function");
   const {
     campaignId,
     campaignName,
@@ -1203,6 +1204,40 @@ const takeSurveyCanvassingSinglePerson = async (req, res) => {
                   survey;
                 }
               });
+            }
+
+            let campaignFoundInCanvassedVotersByCampaign =
+              await Canvassedvotersbycampaign.findOne({
+                campaignOwnerId: campaignId,
+              });
+            if (campaignFoundInCanvassedVotersByCampaign) {
+              Canvassedvotersbycampaign.updateOne(
+                {
+                  campaignOwnerId: campaignId,
+                  "surveyedVotersList._id": voterId,
+                },
+                {
+                  $set: {
+                    "surveyedVotersList.$.voterTags": [
+                      ...voterFound?.voterTags,
+                      ...tagsWithDetails,
+                    ],
+                    "surveyedVotersList.$.lastInfluenced": new Date(),
+                    "surveyedVotersList.$.surveyed": true,
+                    "surveyedVotersList.$.voterDone": true,
+                  },
+                },
+                (err) => {
+                  if (err) {
+                    res.json({
+                      success: false,
+                      message: "Something went wrong",
+                    });
+                    return;
+                  }
+                }
+              );
+            } else {
             }
 
             Voter.updateOne(

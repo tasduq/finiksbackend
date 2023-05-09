@@ -581,7 +581,7 @@ const deleteList = async (req, res) => {
 };
 
 const searchVoter = async (req, res) => {
-  console.log(req.body);
+  console.log(req.body, "i am searchvoter");
   const filters = req.body;
   // const fullName = new RegExp(`.*${name.split(" ").join(".*")}.*`, "i");
   // console.log("i am fullname", fullName);
@@ -686,7 +686,7 @@ const searchVoter = async (req, res) => {
     //   });
     // }
 
-    console.log(foundVoters, "i am foundvotrs");
+    // console.log(foundVoters, "i am foundvotrs");
     res.json({
       success: true,
       foundVoters: foundVoters,
