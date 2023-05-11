@@ -1180,36 +1180,38 @@ const takeSurveyCanvassingSinglePerson = async (req, res) => {
             // console.log(campaignFound, "campaign found from voter surveys");
 
             console.log(voterAnswers);
-            let checkCampaignFound = await Voter.findOne(
-              { _id: voterId },
-              "surveys"
-            );
-            console.log(checkCampaignFound, "11111");
-            let checkCampaignFoundTest = checkCampaignFound.surveys.some(
-              (campaign) => {
-                return campaign?.campaignId === campaignId;
-              }
-            );
-            console.log(checkCampaignFoundTest, "22222");
-            if (checkCampaignFoundTest) {
-              checkCampaignFound = checkCampaignFound.surveys.map((survey) => {
-                if (survey?.campaignId.toString() === campaignId) {
-                  return {
-                    ...survey,
-                    surveyAnswers: voterAnswers,
-                    contactedWay,
-                    recordType,
-                  };
-                } else {
-                  survey;
-                }
-              });
-            }
+            // let checkCampaignFound = await Voter.findOne(
+            //   { _id: voterId },
+            //   "surveys"
+            // );
+            // console.log(checkCampaignFound, "11111");
+            // let checkCampaignFoundTest = checkCampaignFound.surveys.some(
+            //   (campaign) => {
+            //     return campaign?.campaignId === campaignId;
+            //   }
+            // );
+            // console.log(checkCampaignFoundTest, "22222");
+            // if (checkCampaignFoundTest) {
+            //   checkCampaignFound = checkCampaignFound.surveys.map((survey) => {
+            //     if (survey?.campaignId.toString() === campaignId) {
+            //       return {
+            //         ...survey,
+            //         surveyAnswers: voterAnswers,
+            //         contactedWay,
+            //         recordType,
+            //       };
+            //     } else {
+            //       survey;
+            //     }
+            //   });
+            // }
 
             let campaignFoundInCanvassedVotersByCampaign =
               await Canvassedvotersbycampaign.findOne({
                 campaignOwnerId: campaignId,
               });
+            // if (campaignFoundInCanvassedVotersByCampaign) {
+            // } else {
             if (campaignFoundInCanvassedVotersByCampaign) {
               Canvassedvotersbycampaign.updateOne(
                 {
@@ -1219,7 +1221,7 @@ const takeSurveyCanvassingSinglePerson = async (req, res) => {
                 {
                   $set: {
                     "surveyedVotersList.$.voterTags": [
-                      ...voterFound?.voterTags,
+                      // ...voterFound?.voterTags,
                       ...tagsWithDetails,
                     ],
                     "surveyedVotersList.$.lastInfluenced": new Date(),
@@ -1232,284 +1234,306 @@ const takeSurveyCanvassingSinglePerson = async (req, res) => {
                     res.json({
                       success: false,
                       message: "Something went wrong",
+                      code: "canvassedVotersByCampaignupdating",
                     });
                     return;
                   }
                 }
               );
             } else {
-            }
-
-            Voter.updateOne(
-              { _id: voterId },
-              {
-                ...(checkCampaignFoundTest && {
-                  $push: {
-                    voterTags: { $each: tagsWithDetails },
-                  },
-                  $set: {
+              const canvassedVotersByCampaign = new Canvassedvotersbycampaign({
+                campaignOwnerId: campaignId,
+                surveyedVotersList: [
+                  {
+                    _id: voterId,
+                    voterTags: [...tagsWithDetails],
                     lastInfluenced: new Date(),
-                    surveys: checkCampaignFound,
+                    surveyed: true,
+                    voterDone: true,
                   },
-                }),
-                ...(checkCampaignFoundTest === false && {
-                  $push: {
-                    voterTags: { $each: tagsWithDetails },
-                    surveys: {
-                      campaignId,
-                      campaignName,
-                      surveyAnswers: voterAnswers,
-                      contactedWay,
-                      recordType,
-                    },
-                  },
-                  $set: {
-                    lastInfluenced: new Date(),
-                  },
-                }),
-                // ...(checkCampaignFound)
-                // $set: {
-                //   // "surveys.$.surveyAnswers": voterAnswers,
-                //   // "surveys.$.contactedWay": contactedWay,
-                //   // "surveys.$.recordType": recordType,
-                //   lastInfluenced: new Date(),
-                // },
-              },
-              async (err) => {
+                ],
+              });
+              canvassedVotersByCampaign.save(async (err) => {
                 if (err) {
                   res.json({
                     success: false,
                     message: "Something went wrong",
+                    code: "canvassedVotersByCampaignsaving",
                   });
-                } else {
-                  if (tagsWithDetails.length > 0) {
-                    tagsWithDetails.map((tag, i) => {
-                      Tag.updateOne(
-                        { _id: tag.tagId },
+                  return;
+                }
+              });
+            }
 
-                        {
-                          $push: {
-                            users: tag,
-                          },
-                        },
-                        async function (err, updatedTag) {
-                          console.log(err);
-                          if (err) {
-                            res.json({
-                              success: false,
-                              message: "Something went wrong",
-                            });
-                            return;
-                          } else {
-                            if (i === tagsWithDetails.length - 1) {
-                              let member = await Team.findOne(
-                                { _id: subUserId },
-                                "campaignJoined"
-                              );
-                              console.log(member, "i am team member found");
+            if (tagsWithDetails.length > 0) {
+              tagsWithDetails.map((tag, i) => {
+                Tag.updateOne(
+                  { _id: tag.tagId },
 
-                              let campaignFound = member?.campaignJoined?.find(
-                                (campaign) =>
-                                  campaign?.campaignId.toString() ===
-                                  campaignId?.toString()
-                              );
+                  {
+                    $push: {
+                      users: tag,
+                    },
+                  },
+                  async function (err, updatedTag) {
+                    console.log(err);
+                    if (err) {
+                      res.json({
+                        success: false,
+                        message: "Something went wrong",
+                      });
+                      return;
+                    } else {
+                      if (i === tagsWithDetails.length - 1) {
+                        let member = await Team.findOne(
+                          { _id: subUserId },
+                          "campaignJoined"
+                        );
+                        console.log(member, "i am team member found");
 
-                              // if(campaignFound){
+                        let campaignFound = member?.campaignJoined?.find(
+                          (campaign) =>
+                            campaign?.campaignId.toString() ===
+                            campaignId?.toString()
+                        );
 
-                              // }
+                        // if(campaignFound){
 
-                              campaignFound = {
-                                ...campaignFound,
-                                votersInfluenced:
-                                  actions?.votersInfluenced === true
-                                    ? campaignFound?.votersInfluenced + 1
-                                    : campaignFound?.votersInfluenced
-                                    ? campaignFound?.votersInfluenced
-                                    : 0,
+                        // }
 
-                                doorsKnocked:
-                                  actions?.doorsKnocked === true
-                                    ? campaignFound?.doorsKnocked + 1
-                                    : campaignFound?.doorsKnocked
-                                    ? campaignFound?.doorsKnocked
-                                    : 0,
+                        campaignFound = {
+                          ...campaignFound,
+                          votersInfluenced:
+                            actions?.votersInfluenced === true
+                              ? campaignFound?.votersInfluenced + 1
+                              : campaignFound?.votersInfluenced
+                              ? campaignFound?.votersInfluenced
+                              : 0,
 
-                                votersSurveyed:
-                                  actions?.votersSurveyed === true
-                                    ? campaignFound?.votersSurveyed + 1
-                                    : campaignFound?.votersSurveyed
-                                    ? campaignFound?.votersSurveyed
-                                    : 0,
+                          doorsKnocked:
+                            actions?.doorsKnocked === true
+                              ? campaignFound?.doorsKnocked + 1
+                              : campaignFound?.doorsKnocked
+                              ? campaignFound?.doorsKnocked
+                              : 0,
 
-                                votersMessaged:
-                                  actions?.votersMessaged === true
-                                    ? campaignFound?.votersMessaged + 1
-                                    : campaignFound?.votersMessaged
-                                    ? campaignFound?.votersMessaged
-                                    : 0,
+                          votersSurveyed:
+                            actions?.votersSurveyed === true
+                              ? campaignFound?.votersSurveyed + 1
+                              : campaignFound?.votersSurveyed
+                              ? campaignFound?.votersSurveyed
+                              : 0,
 
-                                phonesCalled:
-                                  actions?.phonesCalled === true
-                                    ? campaignFound?.phonesCalled + 1
-                                    : campaignFound?.phonesCalled
-                                    ? campaignFound?.phonesCalled
-                                    : 0,
-                              };
+                          votersMessaged:
+                            actions?.votersMessaged === true
+                              ? campaignFound?.votersMessaged + 1
+                              : campaignFound?.votersMessaged
+                              ? campaignFound?.votersMessaged
+                              : 0,
 
-                              console.log(
-                                campaignFound,
-                                "i am campaign data updated of teammember"
-                              );
+                          phonesCalled:
+                            actions?.phonesCalled === true
+                              ? campaignFound?.phonesCalled + 1
+                              : campaignFound?.phonesCalled
+                              ? campaignFound?.phonesCalled
+                              : 0,
+                        };
 
-                              member = member?.campaignJoined.map(
-                                (memberCampaignJoined) => {
-                                  if (
-                                    memberCampaignJoined.campaignId.toString() ===
-                                    campaignId.toString()
-                                  ) {
-                                    console.log("in iffff");
-                                    return campaignFound;
-                                  } else {
-                                    console.log("in elseee");
-                                    return memberCampaignJoined;
-                                  }
-                                }
-                              );
+                        console.log(
+                          campaignFound,
+                          "i am campaign data updated of teammember"
+                        );
 
-                              console.log(
-                                member,
-                                "i am member after the perticular campiagn is updated in me"
-                              );
-
-                              Team.updateOne(
-                                {
-                                  _id: subUserId,
-                                },
-                                {
-                                  $set: { campaignJoined: member },
-                                },
-                                async (err) => {
-                                  if (err) {
-                                    res.json({
-                                      success: false,
-                                      message: "Voter Data Updation failed",
-                                    });
-                                  } else {
-                                    res.json({
-                                      success: true,
-                                      message: "Voter data updated",
-                                    });
-                                  }
-                                }
-                              );
-
-                              // console.log(updatedTag);
+                        member = member?.campaignJoined.map(
+                          (memberCampaignJoined) => {
+                            if (
+                              memberCampaignJoined.campaignId.toString() ===
+                              campaignId.toString()
+                            ) {
+                              console.log("in iffff");
+                              return campaignFound;
+                            } else {
+                              console.log("in elseee");
+                              return memberCampaignJoined;
                             }
                           }
-                        }
-                      );
+                        );
+
+                        console.log(
+                          member,
+                          "i am member after the perticular campiagn is updated in me"
+                        );
+
+                        Team.updateOne(
+                          {
+                            _id: subUserId,
+                          },
+                          {
+                            $set: { campaignJoined: member },
+                          },
+                          async (err) => {
+                            if (err) {
+                              res.json({
+                                success: false,
+                                message: "Voter Data Updation failed",
+                              });
+                            } else {
+                              res.json({
+                                success: true,
+                                message: "Voter data updated",
+                              });
+                            }
+                          }
+                        );
+
+                        // console.log(updatedTag);
+                      }
+                    }
+                  }
+                );
+              });
+            } else {
+              // if (i === tagsWithDetails.length - 1) {
+              let member = await Team.findOne(
+                { _id: subUserId },
+                "campaignJoined"
+              );
+              console.log(member);
+
+              let campaignFound = member?.campaignJoined?.find(
+                (campaign) =>
+                  campaign.campaignId.toString() === campaignId.toString()
+              );
+
+              // if(campaignFound){
+
+              // }
+
+              campaignFound = {
+                ...campaignFound,
+                votersInfluenced:
+                  actions?.votersInfluenced === true
+                    ? campaignFound?.votersInfluenced + 1
+                    : campaignFound?.votersInfluenced
+                    ? campaignFound?.votersInfluenced
+                    : 0,
+
+                doorsKnocked:
+                  actions?.doorsKnocked === true
+                    ? campaignFound?.doorsKnocked + 1
+                    : campaignFound?.doorsKnocked
+                    ? campaignFound?.doorsKnocked
+                    : 0,
+
+                votersSurveyed:
+                  actions?.votersSurveyed === true
+                    ? campaignFound?.votersSurveyed + 1
+                    : campaignFound?.votersSurveyed
+                    ? campaignFound?.votersSurveyed
+                    : 0,
+
+                votersMessaged:
+                  actions?.votersMessaged === true
+                    ? campaignFound?.votersMessaged + 1
+                    : campaignFound?.votersMessaged
+                    ? campaignFound?.votersMessaged
+                    : 0,
+
+                phonesCalled:
+                  actions?.phonesCalled === true
+                    ? campaignFound?.phonesCalled + 1
+                    : campaignFound?.phonesCalled
+                    ? campaignFound?.phonesCalled
+                    : 0,
+              };
+
+              console.log(campaignFound);
+
+              member = member?.campaignJoined.map((memberCampaignJoined) => {
+                if (
+                  memberCampaignJoined.campaignId.toString() ===
+                  campaignId.toString()
+                ) {
+                  console.log("in iffff");
+                  return campaignFound;
+                } else {
+                  console.log("in elseee");
+                  return memberCampaignJoined;
+                }
+              });
+
+              console.log(member);
+
+              Team.updateOne(
+                {
+                  _id: subUserId,
+                },
+                {
+                  $set: { campaignJoined: member },
+                },
+                async (err) => {
+                  if (err) {
+                    res.json({
+                      success: false,
+                      message: "Voter Data Updation failed",
                     });
                   } else {
-                    // if (i === tagsWithDetails.length - 1) {
-                    let member = await Team.findOne(
-                      { _id: subUserId },
-                      "campaignJoined"
-                    );
-                    console.log(member);
-
-                    let campaignFound = member?.campaignJoined?.find(
-                      (campaign) =>
-                        campaign.campaignId.toString() === campaignId.toString()
-                    );
-
-                    // if(campaignFound){
-
-                    // }
-
-                    campaignFound = {
-                      ...campaignFound,
-                      votersInfluenced:
-                        actions?.votersInfluenced === true
-                          ? campaignFound?.votersInfluenced + 1
-                          : campaignFound?.votersInfluenced
-                          ? campaignFound?.votersInfluenced
-                          : 0,
-
-                      doorsKnocked:
-                        actions?.doorsKnocked === true
-                          ? campaignFound?.doorsKnocked + 1
-                          : campaignFound?.doorsKnocked
-                          ? campaignFound?.doorsKnocked
-                          : 0,
-
-                      votersSurveyed:
-                        actions?.votersSurveyed === true
-                          ? campaignFound?.votersSurveyed + 1
-                          : campaignFound?.votersSurveyed
-                          ? campaignFound?.votersSurveyed
-                          : 0,
-
-                      votersMessaged:
-                        actions?.votersMessaged === true
-                          ? campaignFound?.votersMessaged + 1
-                          : campaignFound?.votersMessaged
-                          ? campaignFound?.votersMessaged
-                          : 0,
-
-                      phonesCalled:
-                        actions?.phonesCalled === true
-                          ? campaignFound?.phonesCalled + 1
-                          : campaignFound?.phonesCalled
-                          ? campaignFound?.phonesCalled
-                          : 0,
-                    };
-
-                    console.log(campaignFound);
-
-                    member = member?.campaignJoined.map(
-                      (memberCampaignJoined) => {
-                        if (
-                          memberCampaignJoined.campaignId.toString() ===
-                          campaignId.toString()
-                        ) {
-                          console.log("in iffff");
-                          return campaignFound;
-                        } else {
-                          console.log("in elseee");
-                          return memberCampaignJoined;
-                        }
-                      }
-                    );
-
-                    console.log(member);
-
-                    Team.updateOne(
-                      {
-                        _id: subUserId,
-                      },
-                      {
-                        $set: { campaignJoined: member },
-                      },
-                      async (err) => {
-                        if (err) {
-                          res.json({
-                            success: false,
-                            message: "Voter Data Updation failed",
-                          });
-                        } else {
-                          res.json({
-                            success: true,
-                            message: "Voter data updated",
-                          });
-                        }
-                      }
-                    );
-
-                    // console.log(updatedTag);
+                    res.json({
+                      success: true,
+                      message: "Voter data updated",
+                    });
                   }
                 }
-              }
-            );
+              );
+
+              // console.log(updatedTag);
+            }
+            // }
+
+            // Voter.updateOne(
+            //   { _id: voterId },
+            //   {
+            //     ...(checkCampaignFoundTest && {
+            //       $push: {
+            //         voterTags: { $each: tagsWithDetails },
+            //       },
+            //       $set: {
+            //         lastInfluenced: new Date(),
+            //         surveys: checkCampaignFound,
+            //       },
+            //     }),
+            //     ...(checkCampaignFoundTest === false && {
+            //       $push: {
+            //         voterTags: { $each: tagsWithDetails },
+            //         surveys: {
+            //           campaignId,
+            //           campaignName,
+            //           surveyAnswers: voterAnswers,
+            //           contactedWay,
+            //           recordType,
+            //         },
+            //       },
+            //       $set: {
+            //         lastInfluenced: new Date(),
+            //       },
+            //     }),
+            //     // ...(checkCampaignFound)
+            //     // $set: {
+            //     //   // "surveys.$.surveyAnswers": voterAnswers,
+            //     //   // "surveys.$.contactedWay": contactedWay,
+            //     //   // "surveys.$.recordType": recordType,
+            //     //   lastInfluenced: new Date(),
+            //     // },
+            //   },
+            //   async (err) => {
+            //     if (err) {
+            //       res.json({
+            //         success: false,
+            //         message: "Something went wrong",
+            //       });
+            //     }
+            //   }
+            // );
 
             // else {
             //   Voter.updateOne(
