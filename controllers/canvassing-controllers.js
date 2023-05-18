@@ -4,6 +4,7 @@ const List = require("../Models/Canvassinglist");
 const List2 = require("../Models/List");
 const Campaign = require("../Models/Campaign");
 const Team = require("../Models/Teammember");
+const Canvassedvotersbycampaign = require("../Models/Canvassedvotersbycampaigns");
 
 const queryCanvassing = async (req, res) => {
   console.log(req.body);
@@ -582,7 +583,7 @@ const deleteList = async (req, res) => {
 
 const searchVoter = async (req, res) => {
   console.log(req.body, "i am searchvoter");
-  const filters = req.body;
+  const filters = req.body?.filters;
   // const fullName = new RegExp(`.*${name.split(" ").join(".*")}.*`, "i");
   // console.log("i am fullname", fullName);
 
@@ -652,6 +653,24 @@ const searchVoter = async (req, res) => {
     });
     console.log();
     foundVoters = voters;
+    let foundCampaign = await Canvassedvotersbycampaign.findOne({
+      campaignOwnerId: req.body.campaignId,
+    });
+    if (foundCampaign && foundCampaign?.surveyedVotersList?.length > 0) {
+      console.log(foundCampaign, "i am foundcanvassed");
+      foundVoters = foundVoters?.filter((voter) => {
+        let alreadyCanvassed = foundCampaign?.surveyedVotersList?.find(
+          (surveyedVoter) =>
+            surveyedVoter?.surveyedBy !== req.body.teamMemberId &&
+            surveyedVoter?.voterId !== voter?._id
+        );
+        console.log(alreadyCanvassed, "i am already canvassed");
+        if (!alreadyCanvassed) {
+          return voter;
+        }
+      });
+    }
+    console.log(foundVoters, "i am updatedfoundvoters");
 
     //Code to use if adam dont like pipeline method
     // if (searchType === "byName") {

@@ -1213,20 +1213,21 @@ const takeSurveyCanvassingSinglePerson = async (req, res) => {
             // if (campaignFoundInCanvassedVotersByCampaign) {
             // } else {
             if (campaignFoundInCanvassedVotersByCampaign) {
+              console.log("nunuuuuuuuuu");
               Canvassedvotersbycampaign.updateOne(
                 {
                   campaignOwnerId: campaignId,
-                  "surveyedVotersList._id": voterId,
                 },
                 {
-                  $set: {
-                    "surveyedVotersList.$.voterTags": [
-                      // ...voterFound?.voterTags,
-                      ...tagsWithDetails,
-                    ],
-                    "surveyedVotersList.$.lastInfluenced": new Date(),
-                    "surveyedVotersList.$.surveyed": true,
-                    "surveyedVotersList.$.voterDone": true,
+                  $push: {
+                    surveyedVotersList: {
+                      voterId: voterId,
+                      voterTags: [...tagsWithDetails],
+                      lastInfluenced: new Date(),
+                      surveyed: true,
+                      voterDone: true,
+                      surveyedBy: subUserId,
+                    },
                   },
                 },
                 (err) => {
@@ -1245,11 +1246,12 @@ const takeSurveyCanvassingSinglePerson = async (req, res) => {
                 campaignOwnerId: campaignId,
                 surveyedVotersList: [
                   {
-                    _id: voterId,
+                    voterId: voterId,
                     voterTags: [...tagsWithDetails],
                     lastInfluenced: new Date(),
                     surveyed: true,
                     voterDone: true,
+                    surveyedBy: subUserId,
                   },
                 ],
               });
