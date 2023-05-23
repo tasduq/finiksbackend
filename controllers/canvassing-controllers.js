@@ -656,13 +656,15 @@ const searchVoter = async (req, res) => {
     let foundCampaign = await Canvassedvotersbycampaign.findOne({
       campaignOwnerId: req.body.campaignId,
     });
+    console.log(foundCampaign, "i am surveyedcampaign");
     if (foundCampaign && foundCampaign?.surveyedVotersList?.length > 0) {
       console.log(foundCampaign, "i am foundcanvassed");
       foundVoters = foundVoters?.filter((voter) => {
-        let alreadyCanvassed = foundCampaign?.surveyedVotersList?.find(
+        let alreadyCanvassed = foundCampaign?.surveyedVotersList?.some(
           (surveyedVoter) =>
-            surveyedVoter?.surveyedBy !== req.body.teamMemberId &&
-            surveyedVoter?.voterId !== voter?._id
+            surveyedVoter?.surveyedBy?.toString() !==
+              req.body.teamMemberId?.toString() &&
+            surveyedVoter?.voterId.toString() !== voter?._id?.toString()
         );
         console.log(alreadyCanvassed, "i am already canvassed");
         if (!alreadyCanvassed) {
@@ -670,7 +672,7 @@ const searchVoter = async (req, res) => {
         }
       });
     }
-    console.log(foundVoters, "i am updatedfoundvoters");
+    // console.log(foundVoters, "i am updatedfoundvoters");
 
     //Code to use if adam dont like pipeline method
     // if (searchType === "byName") {
