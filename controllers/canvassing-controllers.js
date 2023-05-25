@@ -653,21 +653,25 @@ const searchVoter = async (req, res) => {
     });
     console.log();
     foundVoters = voters;
+    // console.log(foundVoters, "foundvoters");
     let foundCampaign = await Canvassedvotersbycampaign.findOne({
       campaignOwnerId: req.body.campaignId,
     });
     console.log(foundCampaign, "i am surveyedcampaign");
+    let filteredVoters;
     if (foundCampaign && foundCampaign?.surveyedVotersList?.length > 0) {
       console.log(foundCampaign, "i am foundcanvassed");
-      foundVoters = foundVoters?.filter((voter) => {
-        let alreadyCanvassed = foundCampaign?.surveyedVotersList?.some(
-          (surveyedVoter) =>
-            surveyedVoter?.surveyedBy?.toString() !==
-              req.body.teamMemberId?.toString() &&
-            surveyedVoter?.voterId.toString() !== voter?._id?.toString()
+      filteredVoters = foundVoters?.filter((voter) => {
+        let alreadyCanvassed = foundCampaign?.surveyedVotersList?.find(
+          (surveyedVoter) => {
+            return (
+              surveyedVoter?.voterId.toString() === voter?._id?.toString() &&
+              surveyedVoter?.surveyedBy === req.body.teamMemberId
+            );
+          }
         );
-        console.log(alreadyCanvassed, "i am already canvassed");
-        if (!alreadyCanvassed) {
+        console.log(alreadyCanvassed, "alreadyCanvassed");
+        if (alreadyCanvassed === undefined) {
           return voter;
         }
       });
@@ -710,7 +714,10 @@ const searchVoter = async (req, res) => {
     // console.log(foundVoters, "i am foundvotrs");
     res.json({
       success: true,
-      foundVoters: foundVoters,
+      foundVoters:
+        foundCampaign && foundCampaign?.surveyedVotersList?.length > 0
+          ? filteredVoters
+          : foundVoters,
     });
   } catch (err) {
     console.log(err, "i am error");
