@@ -7,6 +7,7 @@ const Tag = require("../Models/Tag");
 const Team = require("../Models/Teammember");
 const List = require("../Models/List");
 const Phonebank = require("../Models/Phonebanklists");
+const Canvassingrecords = require("../Models/Canvassinglist");
 const { v4: uuidv4 } = require("uuid");
 
 const addSurvey = async (req, res) => {
@@ -277,7 +278,7 @@ const getCampaignSurveyResponses = async (req, res) => {
 
 //this is survey taking with phonebanking and may be with canvassing list
 const connectSurveyToUser = async (req, res) => {
-  console.log(req.body);
+  console.log(req.body, "i am bodyggggg");
   const {
     campaignId,
     campaignName,
@@ -327,7 +328,7 @@ const connectSurveyToUser = async (req, res) => {
     campaignOwnerId: campaignId,
   });
 
-  console.log(foundCampaignSurvey, "111111");
+  console.log(foundCampaignSurvey, "foundcampaignsurvey");
 
   if (surveyData.length > 0) {
     if (foundCampaignSurvey) {
@@ -392,7 +393,7 @@ const connectSurveyToUser = async (req, res) => {
         }
       );
 
-      console.log(foundCampaignSurvey, "22222");
+      console.log(foundCampaignSurvey, "foundcampaignsurvey");
 
       // let updatedSurveysTaken;
 
@@ -448,13 +449,13 @@ const connectSurveyToUser = async (req, res) => {
               { _id: voterId },
               "surveys"
             );
-            console.log(checkCampaignFound, "11111");
-            checkCampaignFoundTest = checkCampaignFound.surveys.some(
+            console.log(checkCampaignFound, "checkCampaignFound");
+            let checkCampaignFoundTest = checkCampaignFound.surveys.some(
               (campaign) => {
                 return campaign.campaignId === campaignId;
               }
             );
-            console.log(checkCampaignFoundTest, "22222");
+            console.log(checkCampaignFoundTest, "checkCampaignFoundTest");
             if (checkCampaignFoundTest) {
               checkCampaignFound = checkCampaignFound.surveys.map((survey) => {
                 if (survey.campaignId.toString() === campaignId) {
@@ -536,7 +537,7 @@ const connectSurveyToUser = async (req, res) => {
                                 { _id: subUserId },
                                 "campaignJoined"
                               );
-                              console.log(member);
+                              console.log(member, "member");
 
                               let campaignFound = member?.campaignJoined?.find(
                                 (campaign) =>
@@ -692,6 +693,63 @@ const connectSurveyToUser = async (req, res) => {
                                                     success: true,
                                                     message:
                                                       "Voter Data Updated",
+                                                  });
+                                                }
+                                              }
+                                            );
+                                          }
+                                          if (recordType === "canvassing") {
+                                            let recordFound =
+                                              await Canvassingrecords.findOne({
+                                                _id: recordId,
+                                              });
+
+                                            console.log(
+                                              recordFound,
+                                              "record found"
+                                            );
+
+                                            Canvassingrecords.updateOne(
+                                              { _id: recordId },
+                                              {
+                                                $set: {
+                                                  knocked: recordFound?.knocked
+                                                    ? Number(
+                                                        Number(
+                                                          recordFound?.knocked
+                                                        ) + 1
+                                                      )
+                                                    : 1,
+                                                  reached: recordFound?.reached
+                                                    ? Number(
+                                                        Number(
+                                                          recordFound?.reached
+                                                        ) + 1
+                                                      )
+                                                    : 1,
+                                                  surveyed:
+                                                    recordFound?.surveyed
+                                                      ? Number(
+                                                          Number(
+                                                            recordFound?.surveyed
+                                                          ) + 1
+                                                        )
+                                                      : 1,
+                                                },
+                                              },
+                                              (err) => {
+                                                if (err) {
+                                                  console.log(err);
+                                                  res.json({
+                                                    success: false,
+                                                    message:
+                                                      "Error Updating Canvassing Record",
+                                                  });
+                                                } else {
+                                                  res.json({
+                                                    success: true,
+                                                    message:
+                                                      "Voter Data Updated Successfully",
                                                   });
                                                 }
                                               }
@@ -865,6 +923,56 @@ const connectSurveyToUser = async (req, res) => {
                                         res.json({
                                           success: true,
                                           message: "Voter Data Updated",
+                                        });
+                                      }
+                                    }
+                                  );
+                                }
+                                if (recordType === "canvassing") {
+                                  let recordFound =
+                                    await Canvassingrecords.findOne({
+                                      _id: recordId,
+                                    });
+
+                                  console.log(recordFound, "record found");
+
+                                  Canvassingrecords.updateOne(
+                                    { _id: recordId },
+                                    {
+                                      $set: {
+                                        $set: {
+                                          knocked: recordFound?.knocked
+                                            ? Number(
+                                                Number(recordFound?.knocked) + 1
+                                              )
+                                            : 1,
+                                          reached: recordFound?.reached
+                                            ? Number(
+                                                Number(recordFound?.reached) + 1
+                                              )
+                                            : 1,
+                                          surveyed: recordFound?.surveyed
+                                            ? Number(
+                                                Number(recordFound?.surveyed) +
+                                                  1
+                                              )
+                                            : 1,
+                                        },
+                                      },
+                                    },
+                                    (err) => {
+                                      if (err) {
+                                        console.log(err);
+                                        res.json({
+                                          success: false,
+                                          message:
+                                            "Error Updating Canvassing Record",
+                                        });
+                                      } else {
+                                        res.json({
+                                          success: true,
+                                          message:
+                                            "Voter Data Updated Successfully",
                                         });
                                       }
                                     }
