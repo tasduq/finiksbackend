@@ -40,7 +40,6 @@ const queryCanvassing = async (req, res) => {
                 path: "RELIGION",
               },
             },
-
             filters.LANGUAGE && {
               text: {
                 query: filters.LANGUAGE,
@@ -590,70 +589,93 @@ const searchVoter = async (req, res) => {
   try {
     let foundVoters = [];
 
-    let pipeLine = [
-      {
-        $search: {
-          compound: {
-            filter: [
-              filters.FIRSTNAME && {
-                text: {
-                  query: filters.FIRSTNAME,
-                  path: "FIRSTNAME",
+    let pipeLineFunc = (searchFormat = "FIRSTNAME") => {
+      console.log(searchFormat, "=====> Search Format");
+      let pipeLine = [
+        {
+          $search: {
+            compound: {
+              filter: [
+                filters.FIRSTNAME && {
+                  text: {
+                    query: filters.FIRSTNAME,
+                    path: searchFormat,
+                  },
                 },
-              },
-              filters.STATE && {
-                text: {
-                  query: filters.STATE,
-                  path: "STATE",
+                // searchFormat === "LASTNAME" && {
+                //   text: {
+                //     query: filters.FIRSTNAME,
+                //     path: "LASTNAME",
+                //   },
+                // },
+                filters.STATE && {
+                  text: {
+                    query: filters.STATE,
+                    path: "STATE",
+                  },
                 },
-              },
-              filters.CITY && {
-                text: {
-                  query: filters.CITY,
-                  path: "CITY",
+                filters.CITY && {
+                  text: {
+                    query: filters.CITY,
+                    path: "CITY",
+                  },
                 },
-              },
-              filters.AI_COUNTY_NAME && {
-                text: {
-                  query: filters.AI_COUNTY_NAME,
-                  path: "AI_COUNTY_NAME",
+                filters.AI_COUNTY_NAME && {
+                  text: {
+                    query: filters.AI_COUNTY_NAME,
+                    path: "AI_COUNTY_NAME",
+                  },
                 },
-              },
-              filters.ADDRESS && {
-                text: {
-                  query: filters.ADDRESS,
-                  path: "ADDRESS",
+                filters.ADDRESS && {
+                  text: {
+                    query: filters.ADDRESS,
+                    path: "ADDRESS",
+                  },
                 },
-              },
-            ],
+              ],
+            },
           },
         },
-      },
-    ];
+      ];
 
-    console.log(pipeLine[0], "i am pure pipeline");
+      console.log(pipeLine[0], "i am pure pipeline");
 
-    const yoo = pipeLine[0].$search.compound.filter.filter((subFilter) => {
-      // console.log(subFilter);
-      return subFilter !== undefined;
-    });
-    console.log(yoo);
+      const yoo = pipeLine[0].$search.compound.filter.filter((subFilter) => {
+        // console.log(subFilter);
+        return subFilter !== undefined;
+      });
+      console.log(yoo);
 
-    pipeLine[0].$search.compound.filter = yoo;
-    console.log(pipeLine[0].$search.compound.filter, "i am pipe");
+      pipeLine[0].$search.compound.filter = yoo;
+      console.log(pipeLine[0].$search.compound.filter, "i am pipe");
 
-    const results = Aristotle.collection.aggregate(pipeLine);
-    console.log(results, "i am results");
-    let count = 0;
+      return pipeLine;
+    };
 
     let voters = [];
+
+    const results = Aristotle.collection.aggregate(pipeLineFunc("FIRSTNAME"));
+    console.log(results, "i am results");
 
     await results.forEach((voter) => {
       voters.push(voter);
     });
-    console.log();
+
     foundVoters = voters;
-    // console.log(foundVoters, "foundvoters");
+    console.log(foundVoters, "foundvoters results");
+
+    if (foundVoters?.length === 0) {
+      const results = Aristotle.collection.aggregate(pipeLineFunc("LASTNAME"));
+      console.log(results, "i am results");
+
+      await results.forEach((voter) => {
+        voters.push(voter);
+      });
+
+      foundVoters = voters;
+      console.log(foundVoters, "foundvoters results");
+    }
+
     let foundCampaign = await Canvassedvotersbycampaign.findOne({
       campaignOwnerId: req.body.campaignId,
     });

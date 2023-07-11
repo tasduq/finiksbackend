@@ -14,7 +14,7 @@ const clientsRoutes = require("./Routes/Clients-routes");
 const scriptRoutes = require("./Routes/Script-routes");
 const surveyRoutes = require("./Routes/Survey-routes");
 const tagsRoutes = require("./Routes/Tags-routes");
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 const { db } = require("./Config/config");
 
 // app.use(bodyParser.json());
