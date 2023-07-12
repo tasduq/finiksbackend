@@ -13,9 +13,9 @@ const jwt = require("jsonwebtoken");
 const { consumers } = require("nodemailer/lib/xoauth2");
 
 const register = async (req, res, next) => {
-  const { firstName, lastName, email, password, address, phoneNumber } =
-    req.body;
+  let { firstName, lastName, email, password, address, phoneNumber } = req.body;
   console.log(req.body);
+  email = email?.toLowerCase();
 
   if (email && password) {
     let existingTeammember;
@@ -127,9 +127,9 @@ const register = async (req, res, next) => {
 
 const emailVerify = async (req, res) => {
   console.log(req.body);
-  const { otp, email, prevPath } = req.body;
+  let { otp, email, prevPath } = req.body;
   let user;
-
+  email = email?.toLowerCase();
   if (prevPath === "/logincampaign") {
     try {
       user = await Campaign.findOne({ email: email }, "-password");
@@ -187,7 +187,8 @@ const emailVerify = async (req, res) => {
 
 const requestNewEmailOtp = async (req, res) => {
   console.log(req.body);
-  const { email, prevPath } = req.body;
+  let { email, prevPath } = req.body;
+  email = email?.toLowerCase();
 
   if (prevPath === "/logincampaign") {
     let user = await Campaign.findOne({ email: email }, "-password");
@@ -279,10 +280,11 @@ const requestNewEmailOtp = async (req, res) => {
 };
 
 const login = async (req, res, next) => {
-  const { email, password } = req.body;
+  let { email, password } = req.body;
   let existingUser;
 
   console.log(email, password);
+  email = email?.toLowerCase();
 
   try {
     existingUser = await Teammember.findOne({ email: email });
@@ -355,7 +357,7 @@ const login = async (req, res, next) => {
     username: `${existingUser.firstName} ${existingUser.lastName}`,
     id: existingUser._id,
     userId: existingUser._id,
-    email: existingUser.email,
+    email: existingUser.email.toLowerCase(),
     access_token: access_token,
     role: existingUser.role,
     success: true,
@@ -372,8 +374,9 @@ const login = async (req, res, next) => {
 const newPassword = async (req, res) => {
   console.log(req.body);
 
-  const { password, email, recentOtp, prevPath } = req.body;
+  let { password, email, recentOtp, prevPath } = req.body;
   console.log(password, email, recentOtp, "details");
+  email = email?.toLowerCase();
 
   if (password && email && recentOtp) {
     let hashedPassword;
@@ -475,7 +478,7 @@ const newPassword = async (req, res) => {
 
 const sendInvite = async (req, res) => {
   console.log(req.body, "i am body sendinvite");
-  const {
+  let {
     // firstName,
     // lastName,
     phoneNumber,
@@ -490,6 +493,7 @@ const sendInvite = async (req, res) => {
     campaignCode,
     campaignName,
   } = req.body;
+  email = email?.toLowerCase();
 
   sendEmail.sendEmail({
     email,
@@ -554,7 +558,7 @@ const sendInvite = async (req, res) => {
 const getInvitedTeamMembers = async (req, res) => {
   console.log(req.body);
 
-  const { campaignId } = req.body;
+  let { campaignId } = req.body;
 
   const campaignFound = await Campaign.findOne(
     { _id: campaignId },
@@ -577,7 +581,9 @@ const getInvitedTeamMembers = async (req, res) => {
 
 const cancelInvite = async (req, res) => {
   console.log(req.body, "i am body cancel invite");
-  const { email, campaignId } = req.body;
+  let { email, campaignId } = req.body;
+  email = email?.toLowerCase();
+
   try {
     Campaign.updateOne(
       { _id: campaignId },
@@ -605,7 +611,8 @@ const cancelInvite = async (req, res) => {
 
 const addToTeam = async (req, res) => {
   console.log(req.body, "i am body");
-  const { email, campaignId } = req.body;
+  let { email, campaignId } = req.body;
+  email = email?.toLowerCase();
 
   console.log(req.body);
 
@@ -662,7 +669,7 @@ const addToTeam = async (req, res) => {
 const getInvitedVoters = async (req, res) => {
   console.log(req.body);
 
-  const { campaignId } = req.body;
+  let { campaignId } = req.body;
 
   const campaignFound = await Campaign.findOne(
     { _id: campaignId },
@@ -685,7 +692,7 @@ const getInvitedVoters = async (req, res) => {
 
 const editMember = async (req, res) => {
   console.log(req.body, "i am body member");
-  const {
+  let {
     // firstName,
     // lastName,
     email,
@@ -793,7 +800,8 @@ const editMember = async (req, res) => {
 };
 
 const joinCampaign = async (req, res) => {
-  const { campaignCode, email } = req.body;
+  let { campaignCode, email } = req.body;
+  email = email?.toLowerCase();
 
   const campaignFound = await Campaign.findOne({ campaignCode: campaignCode });
   console.log(campaignFound);
@@ -922,7 +930,7 @@ const joinCampaign = async (req, res) => {
 };
 
 const getJoinedCampaigns = async (req, res) => {
-  const { id, role } = req.body;
+  let { id, role } = req.body;
   console.log(id);
 
   const joinedCampaigns = await Teammember.findOne(
@@ -958,7 +966,7 @@ const getJoinedCampaigns = async (req, res) => {
 };
 
 const getTeamPhonebankRecords = async (req, res) => {
-  const { campaignId, teamMemberEmail } = req.body;
+  let { campaignId, teamMemberEmail } = req.body;
   console.log(req.body);
   if (campaignId && teamMemberEmail) {
     let records = await Phonebank.find({ campaignOwnerId: campaignId });
@@ -986,7 +994,7 @@ const getTeamPhonebankRecords = async (req, res) => {
 const getList = async (req, res) => {
   console.log(req.body);
 
-  const list = await List.findOne({ _id: req.body.id });
+  let list = await List.findOne({ _id: req.body.id });
   console.log(list);
   if (list) {
     res.json({ success: true, list });
@@ -1009,7 +1017,7 @@ const getScript = async (req, res) => {
 
 const getTags = async (req, res) => {
   console.log(req.body);
-  const { id } = req.body;
+  let { id } = req.body;
 
   const tags = await Tags.find({ campaignOwnerId: req.body.id });
   console.log(tags);
@@ -1025,7 +1033,7 @@ const getTags = async (req, res) => {
 
 const getAdminTags = async (req, res) => {
   console.log(req.body);
-  const { id } = req.body;
+  let { id } = req.body;
 
   const tags = await Tags.find({ type: "admin" });
   console.log(tags);
@@ -1053,7 +1061,7 @@ const getSurvey = async (req, res) => {
 const updateUserPassword = async (req, res) => {
   console.log(req.body);
 
-  const { passwordUpdate, id, teamLogin } = req.body;
+  let { passwordUpdate, id, teamLogin } = req.body;
   const { oldPassword, newPassword } = passwordUpdate;
 
   let existingUser;
@@ -1181,7 +1189,7 @@ const updateUserPassword = async (req, res) => {
 
 const updateVoterInfo = async (req, res) => {
   console.log(req.body);
-  const {
+  let {
     firstName,
     lastName,
     email,
@@ -1192,6 +1200,7 @@ const updateVoterInfo = async (req, res) => {
     voterId,
     campaignId,
   } = req.body;
+  email = email?.toLowerCase();
 
   List.updateOne(
     {

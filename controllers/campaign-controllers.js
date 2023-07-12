@@ -8,7 +8,7 @@ const jwt = require("jsonwebtoken");
 
 const register = async (req, res, next) => {
   console.log(req.body);
-  const {
+  let {
     campaignName,
     email,
     password,
@@ -24,6 +24,7 @@ const register = async (req, res, next) => {
     city,
   } = req.body;
   // console.log(req.body);
+  email = email?.toLowerCase();
 
   if (campaignName && email) {
     let existingCampaign;
@@ -179,10 +180,11 @@ const register = async (req, res, next) => {
 };
 
 const login = async (req, res, next) => {
-  const { email, password } = req.body;
+  let { email, password } = req.body;
   let existingUser;
 
   console.log(email, password);
+  email = email?.toLowerCase();
 
   try {
     existingUser = await Campaign.findOne({ email: email });
@@ -369,7 +371,7 @@ const login = async (req, res, next) => {
     username: existingUser.campaignName,
     id: existingUser._id,
     userId: existingUser._id,
-    email: existingUser.email,
+    email: existingUser.email?.toLowerCase(),
     access_token: access_token,
     success: true,
     role: existingUser.role,
@@ -386,7 +388,7 @@ const login = async (req, res, next) => {
 };
 
 const updateCampaignData = async (req, res) => {
-  const { campaignDates, campaignLogo, campaignCode, campaignId } = req.body;
+  let { campaignDates, campaignLogo, campaignCode, campaignId } = req.body;
   // console.log(req.body);
   try {
     // ad = await Ad.findOne({ _id: id });
@@ -431,7 +433,7 @@ const updateCampaignData = async (req, res) => {
 };
 
 const updateProfile = async (req, res) => {
-  const {
+  let {
     firstName,
     lastName,
     address,
@@ -605,7 +607,7 @@ const getCampaignFilterData = async (req, res) => {
 };
 
 const getTeamMembers = async (req, res) => {
-  const { campaignId } = req.body;
+  let { campaignId } = req.body;
 
   const campaignFound = await Campaign.findOne(
     { _id: campaignId },
