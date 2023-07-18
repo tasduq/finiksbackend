@@ -589,9 +589,199 @@ const searchVoter = async (req, res) => {
   try {
     let foundVoters = [];
 
-    let pipeLineFunc = (searchFormat = "FIRSTNAME") => {
+    let pipeLineFunc = (searchFormat) => {
       console.log(searchFormat, "=====> Search Format");
-      let pipeLine = [
+      let pipeLine;
+      if (searchFormat === "FULLNAME") {
+        let [firstName, lastName] = filters.FIRSTNAME.split(" ");
+        console.log(firstName, lastName, "i am fullname ====>");
+
+        pipeLine = [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  {
+                    $regexMatch: {
+                      input: "$FIRSTNAME",
+                      regex: new RegExp(firstName, "i"),
+                    },
+                  },
+                  {
+                    $regexMatch: {
+                      input: "$LASTNAME",
+                      regex: new RegExp(lastName, "i"),
+                    },
+                  },
+                  filters.ADDRESS && {
+                    $cond: {
+                      if: filters.ADDRESS,
+                      then: {
+                        $regexMatch: {
+                          input: "$ADDRESS",
+                          regex: new RegExp(filters.ADDRESS, "i"),
+                        },
+                      },
+                      else: true,
+                    },
+                  },
+                  filters.STATE && {
+                    $cond: {
+                      if: filters.STATE,
+                      then: {
+                        $regexMatch: {
+                          input: "$STATE",
+                          regex: new RegExp(filters.STATE, "i"),
+                        },
+                      },
+                      else: true,
+                    },
+                  },
+                  filters.CITY && {
+                    $cond: {
+                      if: filters.CITY,
+                      then: {
+                        $regexMatch: {
+                          input: "$CITY",
+                          regex: new RegExp(filters.CITY, "i"),
+                        },
+                      },
+                      else: true,
+                    },
+                  },
+                  filters.AI_COUNTY_NAME && {
+                    $cond: {
+                      if: filters.AI_COUNTY_NAME,
+                      then: {
+                        $regexMatch: {
+                          input: "$AI_COUNTY_NAME",
+                          regex: new RegExp(filters.AI_COUNTY_NAME, "i"),
+                        },
+                      },
+                      else: true,
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        ];
+        console.log(pipeLine[0], "i am pure pipeline");
+
+        const yoo = pipeLine[0].$match.$expr.$and.filter((subFilter) => {
+          // console.log(subFilter);
+          return subFilter !== undefined;
+        });
+        console.log(yoo);
+
+        pipeLine[0].$match.$expr.$and = yoo;
+        console.log(pipeLine[0].$match.$expr.$and, "i am pipe");
+      } else {
+        // pipeLine = [
+        //   {
+        //     $search: {
+        //       compound: {
+        //         should: [
+        //           filters.FIRSTNAME && {
+        //             text: {
+        //               query: filters.FIRSTNAME,
+        //               path: searchFormat,
+        //             },
+        //           },
+        //           filters.STATE && {
+        //             text: {
+        //               query: filters.STATE,
+        //               path: "STATE",
+        //             },
+        //           },
+        //           filters.CITY && {
+        //             text: {
+        //               query: filters.CITY,
+        //               path: "CITY",
+        //             },
+        //           },
+        //           filters.AI_COUNTY_NAME && {
+        //             text: {
+        //               query: filters.AI_COUNTY_NAME,
+        //               path: "AI_COUNTY_NAME",
+        //             },
+        //           },
+        //           filters.ADDRESS && {
+        //             text: {
+        //               query: filters.ADDRESS,
+        //               path: "ADDRESS",
+        //             },
+        //           },
+        //         ],
+        //         must: [
+        //           {
+        //             $or: [
+        //               filters.ADDRESS && {
+        //                 text: {
+        //                   query: filters.ADDRESS,
+        //                   path: "ADDRESS",
+        //                   fuzzy: {
+        //                     maxEdits: 0,
+        //                   },
+        //                 },
+        //               },
+        //               filters.STATE && {
+        //                 text: {
+        //                   query: filters.STATE,
+        //                   path: "STATE",
+        //                   fuzzy: {
+        //                     maxEdits: 0,
+        //                   },
+        //                 },
+        //               },
+        //               filters.CITY && {
+        //                 text: {
+        //                   query: filters.CITY,
+        //                   path: "CITY",
+        //                   fuzzy: {
+        //                     maxEdits: 0,
+        //                   },
+        //                 },
+        //               },
+        //               filters.AI_COUNTY_NAME && {
+        //                 text: {
+        //                   query: filters.AI_COUNTY_NAME,
+        //                   path: "AI_COUNTY_NAME",
+        //                   fuzzy: {
+        //                     maxEdits: 0,
+        //                   },
+        //                 },
+        //               },
+        //             ],
+        //           },
+        //         ],
+        //       },
+        //     },
+        //   },
+        // ];
+        // console.log(pipeLine[0], "i am pure pipeline");
+        // const yoo = pipeLine[0].$search.compound.should.filter((subFilter) => {
+        //   // console.log(subFilter);
+        //   return subFilter !== undefined;
+        // });
+        // console.log(yoo);
+        // const mustFormat = pipeLine[0].$search.compound.must.filter(
+        //   (subFilter) => {
+        //     // console.log(subFilter);
+        //     return subFilter !== undefined;
+        //   }
+        // );
+        // console.log(mustFormat);
+        // pipeLine[0].$search.compound.should = yoo;
+        // pipeLine[0].$search.compound.must = mustFormat;
+        // console.log(
+        //   pipeLine[0].$search.compound.should,
+        //   pipeLine[0].$search.compound.must,
+        //   "i am pipe"
+        // );
+      }
+
+      pipeLine = [
         {
           $search: {
             compound: {
@@ -602,12 +792,6 @@ const searchVoter = async (req, res) => {
                     path: searchFormat,
                   },
                 },
-                // searchFormat === "LASTNAME" && {
-                //   text: {
-                //     query: filters.FIRSTNAME,
-                //     path: "LASTNAME",
-                //   },
-                // },
                 filters.STATE && {
                   text: {
                     query: filters.STATE,
@@ -633,19 +817,27 @@ const searchVoter = async (req, res) => {
                   },
                 },
               ],
+              must: filters.ADDRESS && [
+                {
+                  text: {
+                    query: filters.ADDRESS,
+                    path: "ADDRESS",
+                    // fuzzy: {
+                    //   maxEdits: 0,
+                    // },
+                  },
+                },
+              ],
             },
           },
         },
       ];
-
       console.log(pipeLine[0], "i am pure pipeline");
-
       const yoo = pipeLine[0].$search.compound.filter.filter((subFilter) => {
         // console.log(subFilter);
         return subFilter !== undefined;
       });
       console.log(yoo);
-
       pipeLine[0].$search.compound.filter = yoo;
       console.log(pipeLine[0].$search.compound.filter, "i am pipe");
 
@@ -654,18 +846,20 @@ const searchVoter = async (req, res) => {
 
     let voters = [];
 
-    const results = Aristotle.collection.aggregate(pipeLineFunc("FIRSTNAME"));
-    console.log(results, "i am results");
+    const [firstName, lastName] = filters.FIRSTNAME.split(" ");
 
-    await results.forEach((voter) => {
-      voters.push(voter);
-    });
+    if (firstName && lastName) {
+      // console.log(pipeLineFunc("FULLNAME"), "i am pipeline of fullname");
+      let results = Aristotle.collection.aggregate(pipeLineFunc("FULLNAME"));
 
-    foundVoters = voters;
-    console.log(foundVoters, "foundvoters results");
+      await results.forEach((voter) => {
+        voters.push(voter);
+      });
 
-    if (foundVoters?.length === 0) {
-      const results = Aristotle.collection.aggregate(pipeLineFunc("LASTNAME"));
+      foundVoters = voters;
+      console.log(foundVoters, "foundvoters results");
+    } else {
+      const results = Aristotle.collection.aggregate(pipeLineFunc("FIRSTNAME"));
       console.log(results, "i am results");
 
       await results.forEach((voter) => {
@@ -674,6 +868,20 @@ const searchVoter = async (req, res) => {
 
       foundVoters = voters;
       console.log(foundVoters, "foundvoters results");
+
+      if (foundVoters?.length === 0) {
+        const results = Aristotle.collection.aggregate(
+          pipeLineFunc("LASTNAME")
+        );
+        console.log(results, "i am results");
+
+        await results.forEach((voter) => {
+          voters.push(voter);
+        });
+
+        foundVoters = voters;
+        console.log(foundVoters, "foundvoters results");
+      }
     }
 
     let foundCampaign = await Canvassedvotersbycampaign.findOne({
