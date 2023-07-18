@@ -677,169 +677,66 @@ const searchVoter = async (req, res) => {
         pipeLine[0].$match.$expr.$and = yoo;
         console.log(pipeLine[0].$match.$expr.$and, "i am pipe");
       } else {
-        // pipeLine = [
-        //   {
-        //     $search: {
-        //       compound: {
-        //         should: [
-        //           filters.FIRSTNAME && {
-        //             text: {
-        //               query: filters.FIRSTNAME,
-        //               path: searchFormat,
-        //             },
-        //           },
-        //           filters.STATE && {
-        //             text: {
-        //               query: filters.STATE,
-        //               path: "STATE",
-        //             },
-        //           },
-        //           filters.CITY && {
-        //             text: {
-        //               query: filters.CITY,
-        //               path: "CITY",
-        //             },
-        //           },
-        //           filters.AI_COUNTY_NAME && {
-        //             text: {
-        //               query: filters.AI_COUNTY_NAME,
-        //               path: "AI_COUNTY_NAME",
-        //             },
-        //           },
-        //           filters.ADDRESS && {
-        //             text: {
-        //               query: filters.ADDRESS,
-        //               path: "ADDRESS",
-        //             },
-        //           },
-        //         ],
-        //         must: [
-        //           {
-        //             $or: [
-        //               filters.ADDRESS && {
-        //                 text: {
-        //                   query: filters.ADDRESS,
-        //                   path: "ADDRESS",
-        //                   fuzzy: {
-        //                     maxEdits: 0,
-        //                   },
-        //                 },
-        //               },
-        //               filters.STATE && {
-        //                 text: {
-        //                   query: filters.STATE,
-        //                   path: "STATE",
-        //                   fuzzy: {
-        //                     maxEdits: 0,
-        //                   },
-        //                 },
-        //               },
-        //               filters.CITY && {
-        //                 text: {
-        //                   query: filters.CITY,
-        //                   path: "CITY",
-        //                   fuzzy: {
-        //                     maxEdits: 0,
-        //                   },
-        //                 },
-        //               },
-        //               filters.AI_COUNTY_NAME && {
-        //                 text: {
-        //                   query: filters.AI_COUNTY_NAME,
-        //                   path: "AI_COUNTY_NAME",
-        //                   fuzzy: {
-        //                     maxEdits: 0,
-        //                   },
-        //                 },
-        //               },
-        //             ],
-        //           },
-        //         ],
-        //       },
-        //     },
-        //   },
-        // ];
-        // console.log(pipeLine[0], "i am pure pipeline");
-        // const yoo = pipeLine[0].$search.compound.should.filter((subFilter) => {
-        //   // console.log(subFilter);
-        //   return subFilter !== undefined;
-        // });
-        // console.log(yoo);
-        // const mustFormat = pipeLine[0].$search.compound.must.filter(
-        //   (subFilter) => {
-        //     // console.log(subFilter);
-        //     return subFilter !== undefined;
-        //   }
-        // );
-        // console.log(mustFormat);
-        // pipeLine[0].$search.compound.should = yoo;
-        // pipeLine[0].$search.compound.must = mustFormat;
-        // console.log(
-        //   pipeLine[0].$search.compound.should,
-        //   pipeLine[0].$search.compound.must,
-        //   "i am pipe"
-        // );
-      }
-
-      pipeLine = [
-        {
-          $search: {
-            compound: {
-              filter: [
-                filters.FIRSTNAME && {
-                  text: {
-                    query: filters.FIRSTNAME,
-                    path: searchFormat,
+        pipeLine = [
+          {
+            $search: {
+              compound: {
+                filter: [
+                  filters.FIRSTNAME && {
+                    text: {
+                      query: filters.FIRSTNAME,
+                      path: searchFormat,
+                    },
                   },
-                },
-                filters.STATE && {
-                  text: {
-                    query: filters.STATE,
-                    path: "STATE",
+                  filters.STATE && {
+                    text: {
+                      query: filters.STATE,
+                      path: "STATE",
+                    },
                   },
-                },
-                filters.CITY && {
-                  text: {
-                    query: filters.CITY,
-                    path: "CITY",
+                  filters.CITY && {
+                    text: {
+                      query: filters.CITY,
+                      path: "CITY",
+                    },
                   },
-                },
-                filters.AI_COUNTY_NAME && {
-                  text: {
-                    query: filters.AI_COUNTY_NAME,
-                    path: "AI_COUNTY_NAME",
+                  filters.AI_COUNTY_NAME && {
+                    text: {
+                      query: filters.AI_COUNTY_NAME,
+                      path: "AI_COUNTY_NAME",
+                    },
                   },
-                },
-                filters.ADDRESS && {
-                  text: {
-                    query: filters.ADDRESS,
-                    path: "ADDRESS",
+                  filters.ADDRESS && {
+                    text: {
+                      query: filters.ADDRESS,
+                      path: "ADDRESS",
+                    },
                   },
-                },
-              ],
-              must: filters.ADDRESS && [
-                {
-                  text: {
-                    query: filters.ADDRESS,
-                    path: "ADDRESS",
-                    // fuzzy: {
-                    //   maxEdits: 0,
-                    // },
+                ],
+                must: filters.ADDRESS && [
+                  {
+                    text: {
+                      query: filters.ADDRESS,
+                      path: "ADDRESS",
+                      // fuzzy: {
+                      //   maxEdits: 0,
+                      // },
+                    },
                   },
-                },
-              ],
+                ],
+              },
             },
           },
-        },
-      ];
-      console.log(pipeLine[0], "i am pure pipeline");
-      const yoo = pipeLine[0].$search.compound.filter.filter((subFilter) => {
-        // console.log(subFilter);
-        return subFilter !== undefined;
-      });
-      console.log(yoo);
-      pipeLine[0].$search.compound.filter = yoo;
-      console.log(pipeLine[0].$search.compound.filter, "i am pipe");
+        ];
+        console.log(pipeLine[0], "i am pure pipeline");
+        const yoo = pipeLine[0].$search.compound.filter.filter((subFilter) => {
+          // console.log(subFilter);
+          return subFilter !== undefined;
+        });
+        console.log(yoo);
+        pipeLine[0].$search.compound.filter = yoo;
+        console.log(pipeLine[0].$search.compound.filter, "i am pipe");
+      }
 
       return pipeLine;
     };
