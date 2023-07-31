@@ -292,7 +292,7 @@ const login = async (req, res, next) => {
       }
 
       res.json({
-        message: "you are login success fully ",
+        message: "You Are Logged In Successfully",
         username: `${memberData.firstName} ${memberData.lastName}`,
         id: "",
         userId: memberData._id,
@@ -367,7 +367,7 @@ const login = async (req, res, next) => {
   // console.log(existingUser);
 
   res.json({
-    message: "you are login success fully ",
+    message: "You Are Logged In Successfully ",
     username: existingUser.campaignName,
     id: existingUser._id,
     userId: existingUser._id,

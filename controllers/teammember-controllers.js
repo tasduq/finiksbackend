@@ -351,7 +351,7 @@ const login = async (req, res, next) => {
   console.log(campaignsJoined, "campaigns joined");
 
   res.json({
-    message: "you are login success fully ",
+    message: "You Are Logged In Successfully ",
     firstName: existingUser.firstName,
     lastName: existingUser.lastName,
     username: `${existingUser.firstName} ${existingUser.lastName}`,
@@ -931,7 +931,7 @@ const joinCampaign = async (req, res) => {
 
 const getJoinedCampaigns = async (req, res) => {
   let { id, role } = req.body;
-  console.log(id);
+  console.log(id, role, "calingcampaigns");
 
   const joinedCampaigns = await Teammember.findOne(
     { _id: id },
@@ -943,13 +943,15 @@ const getJoinedCampaigns = async (req, res) => {
     yoo = joinedCampaigns.campaignJoined.filter(
       (campaign) => campaign.permission === "campaignManager"
     );
+  } else {
+    yoo = joinedCampaigns;
   }
 
-  if (role === "team") {
-    yoo = joinedCampaigns.campaignJoined.filter(
-      (campaign) => campaign.permission !== "campaignManager"
-    );
-  }
+  // if (role === "team") {
+  //   yoo = joinedCampaigns.campaignJoined.filter(
+  //     (campaign) => campaign.permission !== "campaignManager"
+  //   );
+  // }
 
   console.log(joinedCampaigns);
   if (joinedCampaigns) {
