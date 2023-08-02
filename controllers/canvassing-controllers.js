@@ -743,7 +743,7 @@ const searchVoter = async (req, res) => {
 
     let voters = [];
 
-    const [firstName, lastName] = filters.FIRSTNAME.split(" ");
+    const [firstName, lastName] = filters?.FIRSTNAME?.split(" ");
 
     if (firstName && lastName) {
       // console.log(pipeLineFunc("FULLNAME"), "i am pipeline of fullname");

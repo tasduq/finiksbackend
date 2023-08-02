@@ -316,6 +316,7 @@ const login = async (req, res, next) => {
         success: false,
         message: "You are not a member",
       });
+      return;
     }
     // } else {
     //   res.json({
@@ -385,6 +386,7 @@ const login = async (req, res, next) => {
     lastName: existingUser.lastName,
     campaigns: [],
   });
+  return;
 };
 
 const updateCampaignData = async (req, res) => {
@@ -546,11 +548,13 @@ const getNewCode = async (req, res) => {
       code,
       success: true,
     });
+    return;
   } else {
     res.json({
       message: "New Code genrated Error ",
       success: true,
     });
+    return;
   }
 };
 
@@ -581,6 +585,7 @@ const getCampaignData = async (req, res) => {
             },
       },
     });
+    return;
   }
 };
 
@@ -601,8 +606,10 @@ const getCampaignFilterData = async (req, res) => {
       message: "Campaign Data found",
       values: campaignData,
     });
+    return;
   } else {
     res.json({ success: false, message: "Campaign Data not found" });
+    return;
   }
 };
 
@@ -668,11 +675,13 @@ const getTeamMembers = async (req, res) => {
       team: finalTeams,
       success: true,
     });
+    return;
   } else {
     res.json({
       message: "Team Not found make new one",
       success: false,
     });
+    return;
   }
 };
 
@@ -686,8 +695,10 @@ const getTeamAdmin = async (req, res) => {
 
   if (teamAdmin) {
     res.json({ success: true, team: teamAdmin, message: "Team Admin Found" });
+    return;
   } else {
     res.json({ success: false, message: "Admin Not found" });
+    return;
   }
 };
 
@@ -720,8 +731,10 @@ const getCampaignTeammembers = async (req, res) => {
       message: "Team members found",
       foundTeammembers,
     });
+    return;
   } else {
     res.json({ success: false, message: "Team members not found" });
+    return;
   }
 };
 
