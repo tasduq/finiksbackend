@@ -98,6 +98,7 @@ const addSurvey = async (req, res) => {
               message: "Survey Saved ",
               success: true,
             });
+            return;
           }
         });
       } catch (err) {
@@ -268,11 +269,13 @@ const getCampaignSurveyResponses = async (req, res) => {
       message: "Surveys Found",
       foundSurveys: campaignSurvey,
     });
+    return;
   } else {
     res.json({
       success: false,
       message: "Surveys Not Found",
     });
+    return;
   }
 };
 
@@ -435,6 +438,7 @@ const connectSurveyToUser = async (req, res) => {
               success: false,
               message: "Something went wrong",
             });
+            return;
           } else {
             // let campaignFound = await Voter.findOne({ _id: voterId }, "surveys");
             // console.log(campaignFound, "Voter found surveys");
@@ -512,6 +516,7 @@ const connectSurveyToUser = async (req, res) => {
                     success: false,
                     message: "Something went wrong",
                   });
+                  return;
                 } else {
                   if (tagsWithDetails.length > 0) {
                     tagsWithDetails.map((tag, i) => {
@@ -619,6 +624,7 @@ const connectSurveyToUser = async (req, res) => {
                                       success: false,
                                       message: "Voter Data Updation failed",
                                     });
+                                    return;
                                   } else {
                                     let listFound = await List.findOne({
                                       _id: list,
@@ -656,6 +662,7 @@ const connectSurveyToUser = async (req, res) => {
                                             message:
                                               "Error Updating Voter Tags",
                                           });
+                                          return;
                                         } else {
                                           if (recordType === "phonebanking") {
                                             let recordFound =
@@ -688,12 +695,14 @@ const connectSurveyToUser = async (req, res) => {
                                                     message:
                                                       "Error Updating Phonebank Record",
                                                   });
+                                                  return;
                                                 } else {
                                                   res.json({
                                                     success: true,
                                                     message:
                                                       "Voter Data Updated",
                                                   });
+                                                  return;
                                                 }
                                               }
                                             );
@@ -745,12 +754,14 @@ const connectSurveyToUser = async (req, res) => {
                                                     message:
                                                       "Error Updating Canvassing Record",
                                                   });
+                                                  return;
                                                 } else {
                                                   res.json({
                                                     success: true,
                                                     message:
                                                       "Voter Data Updated Successfully",
                                                   });
+                                                  return;
                                                 }
                                               }
                                             );
@@ -855,6 +866,7 @@ const connectSurveyToUser = async (req, res) => {
                             success: false,
                             message: "Voter Data Updation failed",
                           });
+                          return;
                         } else {
                           let listFound = await List.findOne({
                             _id: list,
@@ -891,6 +903,7 @@ const connectSurveyToUser = async (req, res) => {
                                   success: false,
                                   message: "Error Updating Voter Tags",
                                 });
+                                return;
                               } else {
                                 if (recordType === "phonebanking") {
                                   let recordFound = await Phonebank.findOne(
@@ -919,11 +932,13 @@ const connectSurveyToUser = async (req, res) => {
                                           message:
                                             "Error Updating Phonebank Record",
                                         });
+                                        return;
                                       } else {
                                         res.json({
                                           success: true,
                                           message: "Voter Data Updated",
                                         });
+                                        return;
                                       }
                                     }
                                   );
@@ -968,12 +983,14 @@ const connectSurveyToUser = async (req, res) => {
                                           message:
                                             "Error Updating Canvassing Record",
                                         });
+                                        return;
                                       } else {
                                         res.json({
                                           success: true,
                                           message:
                                             "Voter Data Updated Successfully",
                                         });
+                                        return;
                                       }
                                     }
                                   );
@@ -1055,6 +1072,7 @@ const connectSurveyToUser = async (req, res) => {
         success: false,
         message: "Your Campaign Don't have surveys Yet.",
       });
+      return;
       // let updatedSurveyData = surveyData.map((survey) => {
       //   return {
       //     ...survey,
@@ -1116,6 +1134,7 @@ const connectSurveyToUser = async (req, res) => {
     }
   } else {
     res.json({ success: false, message: "You havn't Took any surveys" });
+    return;
   }
 };
 
@@ -1278,6 +1297,7 @@ const takeSurveyCanvassingSinglePerson = async (req, res) => {
               success: false,
               message: "Something went wrong",
             });
+            return;
           } else {
             // let campaignFound = await Voter.findOne({ _id: voterId }, "surveys");
             // console.log(campaignFound, "Voter found surveys");
@@ -1325,30 +1345,95 @@ const takeSurveyCanvassingSinglePerson = async (req, res) => {
               Canvassedvotersbycampaign.updateOne(
                 {
                   campaignOwnerId: campaignId,
+                  "surveyedVotersList.voterId": voterId,
                 },
                 {
-                  $push: {
-                    surveyedVotersList: {
-                      voterId: voterId,
-                      voterTags: [...tagsWithDetails],
-                      lastInfluenced: new Date(),
-                      surveyed: true,
-                      voterDone: true,
-                      surveyedBy: subUserId,
-                    },
+                  $set: {
+                    "surveyedVotersList.$.voterTags": [...tagsWithDetails],
+                    "surveyedVotersList.$.lastInfluenced": new Date(),
+                    "surveyedVotersList.$.surveyedBy": subUserId,
+                    "surveyedVotersList.$.surveyTaken": voterAnswers,
                   },
                 },
-                (err) => {
-                  if (err) {
+                (updateErr, updateResult) => {
+                  if (updateErr) {
                     res.json({
                       success: false,
-                      message: "Something went wrong",
-                      code: "canvassedVotersByCampaignupdating",
+                      message: "Something went wrong with update",
+                      code: "canvassedVotersByCampaignUpdating",
                     });
                     return;
                   }
+
+                  // If no matching document found, updateResult.matchedCount will be 0
+                  if (updateResult.matchedCount === 0) {
+                    // Voter not found, so add the object to the array
+                    Canvassedvotersbycampaign.updateOne(
+                      { campaignOwnerId: campaignId },
+                      {
+                        $addToSet: {
+                          surveyedVotersList: {
+                            voterId: voterId,
+                            voterTags: [...tagsWithDetails],
+                            lastInfluenced: new Date(),
+                            surveyed: true,
+                            voterDone: true,
+                            surveyedBy: subUserId,
+                            surveyTaken: voterAnswers,
+                          },
+                        },
+                      },
+                      (addErr) => {
+                        if (addErr) {
+                          res.json({
+                            success: false,
+                            message: "Something went wrong with adding",
+                            code: "canvassedVotersByCampaignAdding",
+                          });
+                          return;
+                        }
+                      }
+                    );
+                  }
                 }
               );
+
+              // Canvassedvotersbycampaign.updateOne(
+              //   {
+              //     campaignOwnerId: campaignId,
+              //     "surveyedVotersList.voterId": voterId,
+              //   },
+              //   {
+              //     $set: {
+              //       "surveyedVotersList.$.voterTags": [...tagsWithDetails],
+              //       "surveyedVotersList.$.lastInfluenced": new Date(),
+              //       "surveyedVotersList.$.surveyedBy": subUserId,
+              //       "surveyedVotersList.$.surveyTaken": voterAnswers,
+              //     },
+
+              //     $addToSet: {
+              //       surveyedVotersList: {
+              //         voterId: voterId,
+              //         voterTags: [...tagsWithDetails],
+              //         lastInfluenced: new Date(),
+              //         surveyed: true,
+              //         voterDone: true,
+              //         surveyedBy: subUserId,
+              //         surveyTaken: voterAnswers,
+              //       },
+              //     },
+              //   },
+              //   (err) => {
+              //     if (err) {
+              //       res.json({
+              //         success: false,
+              //         message: "Something went wrong",
+              //         code: "canvassedVotersByCampaignupdating",
+              //       });
+              //       return;
+              //     }
+              //   }
+              // );
             } else {
               const canvassedVotersByCampaign = new Canvassedvotersbycampaign({
                 campaignOwnerId: campaignId,
@@ -1360,6 +1445,7 @@ const takeSurveyCanvassingSinglePerson = async (req, res) => {
                     surveyed: true,
                     voterDone: true,
                     surveyedBy: subUserId,
+                    surveyTaken: voterAnswers,
                   },
                 ],
               });
@@ -1390,7 +1476,7 @@ const takeSurveyCanvassingSinglePerson = async (req, res) => {
                     if (err) {
                       res.json({
                         success: false,
-                        message: "Something went wrong",
+                        message: "Something went wrong #tag issue",
                       });
                       return;
                     } else {
@@ -1485,13 +1571,16 @@ const takeSurveyCanvassingSinglePerson = async (req, res) => {
                             if (err) {
                               res.json({
                                 success: false,
-                                message: "Voter Data Updation failed",
+                                message:
+                                  "Voter Data Updation failed #team issue",
                               });
+                              return;
                             } else {
                               res.json({
                                 success: true,
                                 message: "Voter data updated",
                               });
+                              return;
                             }
                           }
                         );
@@ -1587,11 +1676,13 @@ const takeSurveyCanvassingSinglePerson = async (req, res) => {
                       success: false,
                       message: "Voter Data Updation failed",
                     });
+                    return;
                   } else {
                     res.json({
                       success: true,
                       message: "Voter data updated",
                     });
+                    return;
                   }
                 }
               );
@@ -1709,6 +1800,7 @@ const takeSurveyCanvassingSinglePerson = async (req, res) => {
         success: false,
         message: "Your Campaign Don't have surveys Yet.",
       });
+      return;
       // let updatedSurveyData = surveyData.map((survey) => {
       //   return {
       //     ...survey,
@@ -1770,6 +1862,7 @@ const takeSurveyCanvassingSinglePerson = async (req, res) => {
     }
   } else {
     res.json({ success: false, message: "You havn't Took any surveys" });
+    return;
   }
 };
 
@@ -1815,6 +1908,7 @@ const doNotCall = async (req, res) => {
                 success: false,
                 message: "Error Updating Phonebank Record",
               });
+              return;
             } else {
               // res.json({
               //   success: true,
@@ -1858,6 +1952,7 @@ const wrongNumber = async (req, res) => {
           success: false,
           message: "Failed Updation",
         });
+        return;
       } else {
         Aristotle.updateOne(
           { _id: voterId },
@@ -1878,6 +1973,7 @@ const wrongNumber = async (req, res) => {
                 success: false,
                 message: "Voter data updation failed",
               });
+              return;
             } else {
               res.json({ success: true, message: "Updated" });
               return;
@@ -1912,6 +2008,7 @@ const saveInteraction = async (req, res) => {
           success: false,
           message: "Failed Saving Interaction",
         });
+        return;
       } else {
         // List.updateOne(
         //   {
@@ -1951,11 +2048,13 @@ const getCampaigns = async (req, res) => {
       campaigns: campaigns,
       message: "Campaigns Surveus Found",
     });
+    return;
   } else {
     res.json({
       success: false,
       message: "Campaigns Surveys Not Found",
     });
+    return;
   }
 };
 
@@ -1970,11 +2069,13 @@ const getCampaignSurveys = async (req, res) => {
       campaignSurveys: campaign,
       message: "Campaigns Surveus Found",
     });
+    return;
   } else {
     res.json({
       success: false,
       message: "Campaigns Surveys Not Found",
     });
+    return;
   }
 };
 
@@ -1990,11 +2091,13 @@ const getClientSurvey = async (req, res) => {
       clientData: campaignsSurveys,
       message: "Campaign Surveys Found",
     });
+    return;
   } else {
     res.json({
       success: false,
       message: "Campaign Surveys Not Found",
     });
+    return;
   }
 };
 

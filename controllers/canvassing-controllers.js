@@ -781,6 +781,8 @@ const searchVoter = async (req, res) => {
       }
     }
 
+    //Filtering voters for them not to appear again in search
+
     let foundCampaign = await Canvassedvotersbycampaign.findOne({
       campaignOwnerId: req.body.campaignId,
     });
@@ -788,21 +790,36 @@ const searchVoter = async (req, res) => {
     let filteredVoters;
     if (foundCampaign && foundCampaign?.surveyedVotersList?.length > 0) {
       console.log(foundCampaign, "i am foundcanvassed");
-      filteredVoters = foundVoters?.filter((voter) => {
+      filteredVoters = foundVoters?.map((voter) => {
         let alreadyCanvassed = foundCampaign?.surveyedVotersList?.find(
           (surveyedVoter) => {
             return (
-              surveyedVoter?.voterId.toString() === voter?._id?.toString() &&
-              surveyedVoter?.surveyedBy === req.body.teamMemberId
+              surveyedVoter?.voterId.toString() === voter?._id?.toString()
+              // &&
+              // surveyedVoter?.surveyedBy === req.body.teamMemberId
             );
           }
         );
         console.log(alreadyCanvassed, "alreadyCanvassed");
-        if (alreadyCanvassed === undefined) {
+        if (alreadyCanvassed) {
+          return {
+            ...voter,
+            tags: alreadyCanvassed?.voterTags?.map((tag) => {
+              return {
+                tagId: tag.tagId,
+                tagName: tag.tagName,
+              };
+            }),
+            voterAnswers: alreadyCanvassed?.surveyTaken,
+          };
+        } else {
           return voter;
         }
       });
     }
+
+    ///---Till There filtering----/////
+
     // console.log(foundVoters, "i am updatedfoundvoters");
 
     //Code to use if adam dont like pipeline method
