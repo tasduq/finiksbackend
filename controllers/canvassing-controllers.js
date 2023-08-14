@@ -811,6 +811,14 @@ const searchVoter = async (req, res) => {
               };
             }),
             voterAnswers: alreadyCanvassed?.surveyTaken,
+            surveyData: alreadyCanvassed?.surveyTaken?.map((survey) => {
+              return {
+                surveyId: survey?.surveyId,
+              };
+            }),
+            answeredSurveys: alreadyCanvassed?.surveyTaken?.map(
+              (survey) => survey?.surveyId
+            ),
           };
         } else {
           return voter;
