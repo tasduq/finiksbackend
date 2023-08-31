@@ -593,7 +593,7 @@ const connectSurveyToUser = async (req, res) => {
                               };
 
                               console.log(campaignFound);
-
+                              //Here i am updating the previous camapaign data inside team member with new actions of stats
                               member = member?.campaignJoined.map(
                                 (memberCampaignJoined) => {
                                   if (

@@ -14,6 +14,7 @@ const clientsRoutes = require("./Routes/Clients-routes");
 const scriptRoutes = require("./Routes/Script-routes");
 const surveyRoutes = require("./Routes/Survey-routes");
 const tagsRoutes = require("./Routes/Tags-routes");
+const reportaproblemRoutes = require("./Routes/Reportaproblem-routes");
 const PORT = process.env.PORT || 3002;
 const { db } = require("./Config/config");
 
@@ -43,6 +44,7 @@ app.use("/api/clients", clientsRoutes);
 app.use("/api/script", scriptRoutes);
 app.use("/api/survey", surveyRoutes);
 app.use("/api/tags", tagsRoutes);
+app.use("/api/reportaproblem", reportaproblemRoutes);
 
 // let db;
 mongoose

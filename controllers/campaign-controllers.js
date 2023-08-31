@@ -460,6 +460,7 @@ const updateProfile = async (req, res) => {
             address,
             phoneNumber,
             campaignLogo,
+            image: campaignLogo,
           },
         },
         function (err) {
