@@ -16,7 +16,7 @@ const surveyRoutes = require("./Routes/Survey-routes");
 const tagsRoutes = require("./Routes/Tags-routes");
 const reportaproblemRoutes = require("./Routes/Reportaproblem-routes");
 const PORT = process.env.PORT || 3002;
-const { db } = require("./Config/config");
+const { dbStage, dbProd } = require("./Config/config");
 
 // app.use(bodyParser.json());
 app.use(bodyParser.json({ limit: "50mb" }));
@@ -48,7 +48,7 @@ app.use("/api/reportaproblem", reportaproblemRoutes);
 
 // let db;
 mongoose
-  .connect(db, {
+  .connect(dbStage, {
     useNewUrlParser: true,
     //   useCreateIndex: true,
     useUnifiedTopology: true,
