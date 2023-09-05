@@ -8,6 +8,7 @@ const Team = require("../Models/Teammember");
 const List = require("../Models/List");
 const Phonebank = require("../Models/Phonebanklists");
 const Canvassingrecords = require("../Models/Canvassinglist");
+const CampaignCollection = require("../Models/Campaign");
 const { v4: uuidv4 } = require("uuid");
 
 const addSurvey = async (req, res) => {
@@ -540,9 +541,13 @@ const connectSurveyToUser = async (req, res) => {
                             if (i === tagsWithDetails.length - 1) {
                               let member = await Team.findOne(
                                 { _id: subUserId },
-                                "campaignJoined"
+                                ["campaignJoined", "email"]
                               );
                               console.log(member, "member");
+                              let teamMemberData = {
+                                email: member?.email,
+                                teamMemberId: member?._id,
+                              };
 
                               let campaignFound = member?.campaignJoined?.find(
                                 (campaign) =>
@@ -609,7 +614,7 @@ const connectSurveyToUser = async (req, res) => {
                                 }
                               );
 
-                              console.log(member);
+                              console.log(member, "i am latest member");
 
                               Team.updateOne(
                                 {
@@ -626,18 +631,67 @@ const connectSurveyToUser = async (req, res) => {
                                     });
                                     return;
                                   } else {
+                                    console.log(
+                                      campaignFound?.campaignId,
+                                      teamMemberData?.email,
+                                      teamMemberData?.teamMemberId,
+                                      "check meee ==>>"
+                                    );
+                                    let updatedCampaignStats =
+                                      await CampaignCollection.updateOne(
+                                        {
+                                          _id: campaignFound?.campaignId,
+                                          "teamMembers.email":
+                                            teamMemberData?.email,
+                                        },
+                                        {
+                                          $set: {
+                                            "teamMembers.$.email":
+                                              teamMemberData?.email,
+                                            "teamMembers.$.permission":
+                                              campaignFound.permission,
+                                            "teamMembers.$.campaignPosition":
+                                              campaignFound.campaignPosition,
+                                            "teamMembers.$.dateJoined":
+                                              campaignFound.dateJoined,
+                                            "teamMembers.$.votersInfluenced":
+                                              campaignFound.votersInfluenced,
+                                            "teamMembers.$.doorsKnocked":
+                                              campaignFound.doorsKnocked,
+                                            "teamMembers.$.votersSurveyed":
+                                              campaignFound.votersSurveyed,
+                                            "teamMembers.$.votersMessaged":
+                                              campaignFound.votersMessaged,
+                                            "teamMembers.$.phonesCalled":
+                                              campaignFound.phonesCalled,
+                                            "teamMembers.$.campaignName":
+                                              campaignFound.campaignName,
+                                            "teamMembers.$.disabled":
+                                              campaignFound.disabled,
+                                            "teamMembers.$.memberId":
+                                              teamMemberData?.teamMemberId.toString(),
+                                            "teamMembers.$.campaignId":
+                                              campaignFound.campaignId,
+                                          },
+                                        }
+                                      );
+                                    console.log(
+                                      updatedCampaignStats,
+                                      "i am updated stats"
+                                    );
+
                                     let listFound = await List.findOne({
                                       _id: list,
                                     });
-                                    console.log(listFound);
+
                                     let voterFound = listFound?.voters?.find(
                                       (voter) => voter._id === voterId
                                     );
-                                    console.log(
-                                      voterFound,
-                                      "voterFound",
-                                      tagsWithDetails
-                                    );
+                                    // console.log(
+                                    //   voterFound,
+                                    //   "voterFound",
+                                    //   tagsWithDetails
+                                    // );
                                     List.updateOne(
                                       {
                                         _id: list,
@@ -671,10 +725,10 @@ const connectSurveyToUser = async (req, res) => {
                                                 "totalCalled"
                                               );
 
-                                            console.log(
-                                              recordFound,
-                                              "record found"
-                                            );
+                                            // console.log(
+                                            //   recordFound,
+                                            //   "record found"
+                                            // );
 
                                             Phonebank.updateOne(
                                               { _id: recordId },
@@ -713,10 +767,10 @@ const connectSurveyToUser = async (req, res) => {
                                                 _id: recordId,
                                               });
 
-                                            console.log(
-                                              recordFound,
-                                              "record found"
-                                            );
+                                            // console.log(
+                                            //   recordFound,
+                                            //   "record found"
+                                            // );
 
                                             Canvassingrecords.updateOne(
                                               { _id: recordId },
@@ -781,11 +835,15 @@ const connectSurveyToUser = async (req, res) => {
                     });
                   } else {
                     // if (i === tagsWithDetails.length - 1) {
-                    let member = await Team.findOne(
-                      { _id: subUserId },
-                      "campaignJoined"
-                    );
+                    let member = await Team.findOne({ _id: subUserId }, [
+                      "campaignJoined",
+                      "email",
+                    ]);
                     console.log(member);
+                    let teamMemberData = {
+                      email: member?.email,
+                      teamMemberId: member?._id,
+                    };
 
                     let campaignFound = member?.campaignJoined?.find(
                       (campaign) =>
@@ -868,18 +926,60 @@ const connectSurveyToUser = async (req, res) => {
                           });
                           return;
                         } else {
+                          let updatedCampaignStats =
+                            await CampaignCollection.updateOne(
+                              {
+                                _id: campaignFound?.campaignId,
+                                "teamMembers.email": teamMemberData?.email,
+                              },
+                              {
+                                $set: {
+                                  "teamMembers.$.email": teamMemberData?.email,
+                                  "teamMembers.$.permission":
+                                    campaignFound.permission,
+                                  "teamMembers.$.campaignPosition":
+                                    campaignFound.campaignPosition,
+                                  "teamMembers.$.dateJoined":
+                                    campaignFound.dateJoined,
+                                  "teamMembers.$.votersInfluenced":
+                                    campaignFound.votersInfluenced,
+                                  "teamMembers.$.doorsKnocked":
+                                    campaignFound.doorsKnocked,
+                                  "teamMembers.$.votersSurveyed":
+                                    campaignFound.votersSurveyed,
+                                  "teamMembers.$.votersMessaged":
+                                    campaignFound.votersMessaged,
+                                  "teamMembers.$.phonesCalled":
+                                    campaignFound.phonesCalled,
+                                  "teamMembers.$.campaignName":
+                                    campaignFound.campaignName,
+                                  "teamMembers.$.disabled":
+                                    campaignFound.disabled,
+                                  "teamMembers.$.memberId":
+                                    teamMemberData?.teamMemberId.toString(),
+                                  "teamMembers.$.campaignId":
+                                    campaignFound.campaignId,
+                                },
+                              }
+                            );
+                          console.log(
+                            updatedCampaignStats,
+                            "i am updated stats 2nddddddd"
+                          );
+
                           let listFound = await List.findOne({
                             _id: list,
                           });
-                          console.log(listFound);
+                          // console.log(listFound);
                           let voterFound = listFound?.voters?.find(
                             (voter) => voter._id === voterId
                           );
-                          console.log(
-                            voterFound,
-                            "voterFound",
-                            tagsWithDetails
-                          );
+                          // console.log(
+                          //   voterFound,
+                          //   "voterFound",
+                          //   tagsWithDetails
+                          // );
+
                           List.updateOne(
                             {
                               _id: list,
@@ -1481,21 +1581,22 @@ const takeSurveyCanvassingSinglePerson = async (req, res) => {
                     return;
                   } else {
                     if (i === tagsWithDetails.length - 1) {
-                      let member = await Team.findOne(
-                        { _id: subUserId },
-                        "campaignJoined"
-                      );
+                      let member = await Team.findOne({ _id: subUserId }, [
+                        "campaignJoined",
+                        "email",
+                      ]);
                       console.log(member, "i am team member found");
+
+                      let teamMemberData = {
+                        email: member?.email,
+                        teamMemberId: member?._id,
+                      };
 
                       let campaignFound = member?.campaignJoined?.find(
                         (campaign) =>
                           campaign?.campaignId.toString() ===
                           campaignId?.toString()
                       );
-
-                      // if(campaignFound){
-
-                      // }
 
                       campaignFound = {
                         ...campaignFound,
@@ -1575,6 +1676,54 @@ const takeSurveyCanvassingSinglePerson = async (req, res) => {
                             });
                             return;
                           } else {
+                            console.log(
+                              campaignFound?.campaignId,
+                              teamMemberData?.email,
+                              teamMemberData?.teamMemberId,
+                              "check meee ==>>"
+                            );
+                            let updatedCampaignStats =
+                              await CampaignCollection.updateOne(
+                                {
+                                  _id: campaignFound?.campaignId,
+                                  "teamMembers.email": teamMemberData?.email,
+                                },
+                                {
+                                  $set: {
+                                    "teamMembers.$.email":
+                                      teamMemberData?.email,
+                                    "teamMembers.$.permission":
+                                      campaignFound.permission,
+                                    "teamMembers.$.campaignPosition":
+                                      campaignFound.campaignPosition,
+                                    "teamMembers.$.dateJoined":
+                                      campaignFound.dateJoined,
+                                    "teamMembers.$.votersInfluenced":
+                                      campaignFound.votersInfluenced,
+                                    "teamMembers.$.doorsKnocked":
+                                      campaignFound.doorsKnocked,
+                                    "teamMembers.$.votersSurveyed":
+                                      campaignFound.votersSurveyed,
+                                    "teamMembers.$.votersMessaged":
+                                      campaignFound.votersMessaged,
+                                    "teamMembers.$.phonesCalled":
+                                      campaignFound.phonesCalled,
+                                    "teamMembers.$.campaignName":
+                                      campaignFound.campaignName,
+                                    "teamMembers.$.disabled":
+                                      campaignFound.disabled,
+                                    "teamMembers.$.memberId":
+                                      teamMemberData?.teamMemberId.toString(),
+                                    "teamMembers.$.campaignId":
+                                      campaignFound.campaignId,
+                                  },
+                                }
+                              );
+                            console.log(
+                              updatedCampaignStats,
+                              "i am updated stats"
+                            );
+
                             res.json({
                               success: true,
                               message: "Voter data updated",
@@ -1592,11 +1741,15 @@ const takeSurveyCanvassingSinglePerson = async (req, res) => {
             });
           } else {
             // if (i === tagsWithDetails.length - 1) {
-            let member = await Team.findOne(
-              { _id: subUserId },
-              "campaignJoined"
-            );
+            let member = await Team.findOne({ _id: subUserId }, [
+              "campaignJoined",
+              "email",
+            ]);
             console.log(member);
+            let teamMemberData = {
+              email: member?.email,
+              teamMemberId: member?._id,
+            };
 
             let campaignFound = member?.campaignJoined?.find(
               (campaign) =>
@@ -1677,6 +1830,44 @@ const takeSurveyCanvassingSinglePerson = async (req, res) => {
                   });
                   return;
                 } else {
+                  console.log(
+                    campaignFound?.campaignId,
+                    teamMemberData?.email,
+                    teamMemberData?.teamMemberId,
+                    "check meee ==>>"
+                  );
+                  let updatedCampaignStats = await CampaignCollection.updateOne(
+                    {
+                      _id: campaignFound?.campaignId,
+                      "teamMembers.email": teamMemberData?.email,
+                    },
+                    {
+                      $set: {
+                        "teamMembers.$.email": teamMemberData?.email,
+                        "teamMembers.$.permission": campaignFound.permission,
+                        "teamMembers.$.campaignPosition":
+                          campaignFound.campaignPosition,
+                        "teamMembers.$.dateJoined": campaignFound.dateJoined,
+                        "teamMembers.$.votersInfluenced":
+                          campaignFound.votersInfluenced,
+                        "teamMembers.$.doorsKnocked":
+                          campaignFound.doorsKnocked,
+                        "teamMembers.$.votersSurveyed":
+                          campaignFound.votersSurveyed,
+                        "teamMembers.$.votersMessaged":
+                          campaignFound.votersMessaged,
+                        "teamMembers.$.phonesCalled":
+                          campaignFound.phonesCalled,
+                        "teamMembers.$.campaignName":
+                          campaignFound.campaignName,
+                        "teamMembers.$.disabled": campaignFound.disabled,
+                        "teamMembers.$.memberId":
+                          teamMemberData?.teamMemberId.toString(),
+                        "teamMembers.$.campaignId": campaignFound.campaignId,
+                      },
+                    }
+                  );
+                  console.log(updatedCampaignStats, "i am updated stats");
                   res.json({
                     success: true,
                     message: "Voter data updated",
