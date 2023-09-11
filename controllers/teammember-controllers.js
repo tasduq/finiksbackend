@@ -11,6 +11,7 @@ var otpGenerator = require("otp-generator");
 var sendEmail = require("../Utils/Sendemail");
 const jwt = require("jsonwebtoken");
 const { consumers } = require("nodemailer/lib/xoauth2");
+const { JWTKEY, teamCode } = require("../Config/config");
 
 const register = async (req, res, next) => {
   let { firstName, lastName, email, password, address, phoneNumber } = req.body;
@@ -330,8 +331,12 @@ const login = async (req, res, next) => {
   let access_token;
   try {
     access_token = jwt.sign(
-      { userId: existingUser._id, email: existingUser.email },
-      "myprivatekey",
+      {
+        userId: existingUser._id,
+        email: existingUser.email,
+        roleCode: teamCode,
+      },
+      JWTKEY,
       { expiresIn: "1h" }
     );
   } catch (err) {
