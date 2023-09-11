@@ -3,6 +3,11 @@ const Team = require("../Models/Teammember");
 const bcrypt = require("bcryptjs");
 var otpGenerator = require("otp-generator");
 var sendEmail = require("../Utils/Sendemail");
+const {
+  JWTKEY,
+  superAdminCode,
+  campaignManagerCode,
+} = require("../Config/config");
 
 const jwt = require("jsonwebtoken");
 
@@ -278,9 +283,11 @@ const login = async (req, res, next) => {
       let access_token;
       try {
         access_token = jwt.sign(
-          { userId: member._id, email: email },
-          "myprivatekey",
-          { expiresIn: "1h" }
+          { userId: member._id, email: email, roleCode: campaignManagerCode },
+          JWTKEY,
+          {
+            expiresIn: "1h",
+          }
         );
       } catch (err) {
         res.json({
@@ -299,7 +306,7 @@ const login = async (req, res, next) => {
         email: email,
         access_token: access_token,
         success: true,
-        role: "",
+        role: existingUser?.role ?? "campaignManager",
         campaignCode: "",
         campaignName: "",
         campaignLogo: memberData.campaignLogo,
@@ -353,8 +360,12 @@ const login = async (req, res, next) => {
   let access_token;
   try {
     access_token = jwt.sign(
-      { userId: existingUser._id, email: existingUser.email },
-      "myprivatekey",
+      {
+        userId: existingUser._id,
+        email: existingUser.email,
+        roleCode: superAdminCode,
+      },
+      JWTKEY,
       { expiresIn: "1h" }
     );
   } catch (err) {

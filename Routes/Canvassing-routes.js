@@ -1,25 +1,36 @@
 const express = require("express");
+const verifyToken = require("../middlewares/auth"); // Import the middleware
 
 const canvassingController = require("../controllers/canvassing-controllers");
 
 const router = express.Router();
 
-router.post("/querycanvassing", canvassingController.queryCanvassing);
-router.post("/saverecord", canvassingController.saveRecord);
-router.post("/updaterecord", canvassingController.updateRecord);
-router.post("/getrecords", canvassingController.getRecords);
-router.post("/savelist", canvassingController.saveList);
-router.post("/getlists", canvassingController.getLists);
+router.post(
+  "/querycanvassing",
+  verifyToken,
+  canvassingController.queryCanvassing
+);
+router.post("/saverecord", verifyToken, canvassingController.saveRecord);
+router.post("/updaterecord", verifyToken, canvassingController.updateRecord);
+router.post("/getrecords", verifyToken, canvassingController.getRecords);
+router.post("/savelist", verifyToken, canvassingController.saveList);
+router.post("/getlists", verifyToken, canvassingController.getLists);
 router.post(
   "/getlistsforcanvassing",
+  verifyToken,
   canvassingController.getListsForCanvassing
 );
-router.post("/updatelist", canvassingController.updateList);
-router.post("/editlist", canvassingController.editList);
-router.post("/deletelist", canvassingController.deleteList);
-router.post("/searchvotersforcanvassing", canvassingController.searchVoter);
+router.post("/updatelist", verifyToken, canvassingController.updateList);
+router.post("/editlist", verifyToken, canvassingController.editList);
+router.post("/deletelist", verifyToken, canvassingController.deleteList);
+router.post(
+  "/searchvotersforcanvassing",
+  verifyToken,
+  canvassingController.searchVoter
+);
 router.post(
   "/searchcanvassinglists",
+  verifyToken,
   canvassingController.searchCanvassingList
 );
 

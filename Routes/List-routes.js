@@ -1,12 +1,13 @@
 const express = require("express");
+const verifyToken = require("../middlewares/auth"); // Import the middleware
 
 const listController = require("../controllers/list-controllers");
 
 const router = express.Router();
 
-router.post("/querydata", listController.queryData);
-router.post("/savelist", listController.saveList);
-router.post("/getlists", listController.getLists);
+router.post("/querydata", verifyToken, listController.queryData);
+router.post("/savelist", verifyToken, listController.saveList);
+router.post("/getlists", verifyToken, listController.getLists);
 // router.post(
 //   "/getlistsforlisting",
 //   listController.getListsForlisting

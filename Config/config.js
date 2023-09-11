@@ -8,4 +8,7 @@ module.exports = {
   cloudName: process.env.CLOUDNAME,
   cloudinaryApiKey: process.env.CLOUDINARYAPIKEY,
   cloudinaryApiSecret: process.env.CLOUDINARYAPISECRET,
+  superAdminCode: process.env.SUPERADMINCODE,
+  campaignManagerCode: process.env.CAMPAIGNMANAGER,
+  teamCode: process.env.TEAM,
 };
