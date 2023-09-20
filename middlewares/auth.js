@@ -15,13 +15,13 @@ const rolesCode = {
 };
 
 function verifyToken(req, res, next) {
-  // console.log(req.header, req.headers, "i am headers");
+  console.log(req.header, req.headers, "i am headers");
   const token = req.headers.authorization.split(" ")[2];
-  // console.log(token, secretKey, "i am token");
+  console.log(token, secretKey, "i am token");
   const role = req.headers.authorization.split(" ")[0];
-  // console.log(role, "i a role");
+  console.log(role, "i a role");
   const roleCodeFound = rolesCode[role];
-  // console.log(roleCodeFound, "i am rolecode found");
+  console.log(roleCodeFound, "i am rolecode found");
 
   if (!token) {
     return res
@@ -44,7 +44,9 @@ function verifyToken(req, res, next) {
     }
   } catch (err) {
     // console.log("error block", err);
-    return res.json({ message: "Invalid token.", success: false });
+    return res
+      .status(401)
+      .json({ message: "Invalid token. Login Again", success: false });
   }
 }
 

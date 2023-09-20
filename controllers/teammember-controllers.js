@@ -349,6 +349,8 @@ const login = async (req, res, next) => {
   }
   console.log(existingUser);
 
+  // this condition is not getting used as campaign manager is needs to be appear at team login
+
   let campaignsJoined = existingUser?.campaignJoined?.filter(
     (campaign) => campaign.permission !== "campaignManager"
   );
@@ -364,7 +366,7 @@ const login = async (req, res, next) => {
     userId: existingUser._id,
     email: existingUser.email.toLowerCase(),
     access_token: access_token,
-    role: existingUser.role,
+    role: existingUser.role ?? "team",
     success: true,
     campaignJoined: existingUser.campaignJoined,
     emailVerified: existingUser.emailVerified,

@@ -1,5 +1,6 @@
 const Campaign = require("../Models/Campaign");
 const Team = require("../Models/Teammember");
+const Aristotle = require("../Models/Aristotledata");
 const bcrypt = require("bcryptjs");
 var otpGenerator = require("otp-generator");
 var sendEmail = require("../Utils/Sendemail");
@@ -8,11 +9,13 @@ const {
   superAdminCode,
   campaignManagerCode,
 } = require("../Config/config");
+const ImageProcessor = require("../Utils/Imageprocesor");
 
 const jwt = require("jsonwebtoken");
 
 const register = async (req, res, next) => {
-  console.log(req.body);
+  console.log(req.body, "i am bucket data");
+
   let {
     campaignName,
     email,
@@ -404,15 +407,16 @@ const updateCampaignData = async (req, res) => {
   let { campaignDates, campaignLogo, campaignCode, campaignId } = req.body;
   // console.log(req.body);
   try {
-    // ad = await Ad.findOne({ _id: id });
-
+    // console.log(uploadImages, "yoooo ====>");
+    let imagesUploaded = await ImageProcessor.uploadImages([campaignLogo]);
+    console.log(imagesUploaded, "i am uploaded images of campaign logo");
     let ad = Campaign.updateOne(
       { _id: campaignId },
 
       {
         $set: {
           campaignDates,
-          campaignLogo,
+          campaignLogo: imagesUploaded[0],
           campaignCode,
         },
       },
@@ -457,6 +461,9 @@ const updateProfile = async (req, res) => {
   } = req.body;
   // console.log(req.body);
 
+  let imagesUploaded = await ImageProcessor.uploadImages([campaignLogo]);
+  console.log(imagesUploaded, "i am uploaded images of campaign logo");
+
   if (teamLogin === "true") {
     try {
       // ad = await Ad.findOne({ _id: id });
@@ -470,8 +477,8 @@ const updateProfile = async (req, res) => {
             lastName,
             address,
             phoneNumber,
-            campaignLogo,
-            image: campaignLogo,
+            campaignLogo: imagesUploaded[0],
+            image: imagesUploaded[0],
           },
         },
         function (err) {
@@ -514,7 +521,7 @@ const updateProfile = async (req, res) => {
             lastName,
             address,
             phoneNumber,
-            campaignLogo,
+            campaignLogo: imagesUploaded[0],
           },
         },
         function (err) {
