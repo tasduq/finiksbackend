@@ -141,16 +141,26 @@ const addAristotleData = async (req, res) => {
     },
   });
 
-  console.log(result);
-  if (!result.sheet1) {
-    console.log("Convert Sheet name to sheet1");
-    res.json({ succes: false, message: "Convert Sheet name to sheet1" });
+  console.log(result, "i am result");
+
+  if (!result.sheet1 && !result.Sheet1) {
+    console.log("Convert Sheet name to sheet1 or Sheet1");
+    res.json({
+      succes: false,
+      message: "Convert Sheet name to sheet1 or Sheet1",
+    });
     return;
   }
-  let saveVoter = [...result.sheet1];
+  let saveVoter = [];
+  if (result.sheet1) {
+    saveVoter = [...result.sheet1];
+  } else {
+    saveVoter = [...result.Sheet1];
+  }
   saveVoter.splice(0, 1);
   // console.log(saveVoter);
   // filter = { 'API_ID'}
+
   saveVoter.map(async (voter) => {
     Aristotle.collection.updateOne(
       { API_ID: voter.API_ID },

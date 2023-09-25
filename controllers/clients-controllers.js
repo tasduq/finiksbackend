@@ -1,5 +1,18 @@
 const Campaign = require("../Models/Campaign");
 const Aristotle = require("../Models/Aristotledata");
+const CampaignDataBucket = require("../Models/Campaigndatabucket");
+const mongoose = require("mongoose");
+
+const campaignLevelMappedValues = {
+  "Federal - Senate": "STATE",
+  "Federal - House": "CONG_DIST",
+  "State - Statewide": "STATE",
+  "State - Senate": "ST_UP_HOUS",
+  "State - House": "ST_LO_HOUS",
+  "County - County Wide": "CNTY_DIST",
+  "County - County Commision": "CNTY_DIST",
+  "City - City Wide": "MUNICIPALITY",
+};
 
 const getClients = async (req, res) => {
   const allClients = await Campaign.find({}, "-password");
@@ -19,7 +32,7 @@ const getClients = async (req, res) => {
 };
 
 const editClient = async (req, res) => {
-  console.log(req.body);
+  console.log(req.body, "i am body");
   const {
     campaignName,
     email,
@@ -34,7 +47,81 @@ const editClient = async (req, res) => {
     city,
     county,
     countyCommission,
+    dataBucketUpdated,
   } = req.body;
+
+  let resolvedCampaignData;
+
+  if (dataBucketUpdated) {
+    let buildQuery = (state, level) => {
+      let query = {};
+
+      if (level === "Federal - Senate" || level === "State - Statewide") {
+        query = {
+          STATE: state,
+        };
+      }
+
+      if (level === "Federal - House") {
+        query = {
+          STATE: state,
+          [campaignLevelMappedValues[level]]: { $in: district },
+        };
+      }
+
+      if (level === "State - Senate" || level === "State - House") {
+        query = {
+          STATE: state,
+          [campaignLevelMappedValues[level]]: { $in: district },
+        };
+      }
+
+      if (
+        level === "County - County Wide" ||
+        level === "County - County Commision"
+      ) {
+        query = {
+          STATE: state,
+          [campaignLevelMappedValues[level]]: { $in: countyCommission },
+        };
+      }
+
+      if (level === "City - City Wide") {
+        query = {
+          STATE: state,
+          [campaignLevelMappedValues[level]]: { $in: city },
+        };
+      }
+
+      return query;
+    };
+
+    let foundQuery = buildQuery(state, level);
+    console.log(foundQuery, "i am final query");
+
+    try {
+      let campaignData = Aristotle.aggregate([
+        {
+          $match: foundQuery,
+        },
+      ]);
+
+      resolvedCampaignData = await campaignData;
+
+      // Process the resolvedCampaignData here if successful.
+      // console.log("Aggregation result:", resolvedCampaignData);
+    } catch (error) {
+      // Handle the error here.
+      console.error("Error during aggregation:", error);
+      res.json({
+        success: false,
+        data: err,
+        message: "Something went wrong , Code: #databucketresultsfailed",
+      });
+      return;
+    }
+    console.log(resolvedCampaignData.length, "i am resolved");
+  }
 
   try {
     let ad = Campaign.updateOne(
@@ -43,7 +130,7 @@ const editClient = async (req, res) => {
       {
         $set: {
           campaignName,
-          email,
+          // email,
           startDate,
           endDate,
           election,
@@ -65,11 +152,42 @@ const editClient = async (req, res) => {
           });
           return;
         } else {
-          res.json({
-            success: true,
-            message: "Client Updated",
-          });
-          return;
+          if (dataBucketUpdated) {
+            let objectId = mongoose.Types.ObjectId(id);
+            console.log(objectId, "i am object id");
+            console.log(resolvedCampaignData.length, "i am resolved");
+            CampaignDataBucket.updateOne(
+              { campaignId: mongoose.Types.ObjectId(id) },
+              {
+                $set: {
+                  campaignData: resolvedCampaignData,
+                },
+              },
+              (err) => {
+                if (err) {
+                  res.json({
+                    success: false,
+                    message: "Something went wrong #databucketupdateerror",
+                  });
+                  return;
+                } else {
+                  console.log("=====> data bucket updated");
+                  res.json({
+                    success: true,
+                    message: "Client Data Updated",
+                  });
+                  return;
+                }
+              }
+            );
+          } else {
+            console.log("=====> data bucket updated outside");
+            res.json({
+              success: true,
+              message: "Client Data Updated",
+            });
+            return;
+          }
         }
       }
     );
