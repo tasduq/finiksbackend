@@ -3,6 +3,27 @@ const Finiks = require("../Models/Finiksdata");
 const excelToJson = require("convert-excel-to-json");
 const fs = require("fs");
 
+const getAristotleDataTotalCount = async (req, res) => {
+  try {
+    let count = 0;
+    count = await Aristotle.countDocuments();
+    console.log("Number of documents in the collection:", count);
+    res.json({
+      success: true,
+      aristotleDataTotal: count,
+      message: "Aristotle Data found",
+    });
+    return;
+  } catch (err) {
+    console.error("Error counting documents:", err);
+    res.json({
+      success: false,
+      message: "Something went wrong , #aristotlecountfailed",
+    });
+    return;
+  }
+};
+
 const getAristotledata = async (req, res) => {
   const { bottomHit } = req.body;
   console.log(bottomHit);
@@ -21,7 +42,7 @@ const getAristotledata = async (req, res) => {
     return;
   } else {
     res.json({
-      success: true,
+      success: false,
       message: "Aristotle Data Not found",
     });
     return;
@@ -237,4 +258,5 @@ module.exports = {
   getAristotledata,
   addAristotleData,
   editVoter,
+  getAristotleDataTotalCount,
 };

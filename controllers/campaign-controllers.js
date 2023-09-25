@@ -390,7 +390,7 @@ const login = async (req, res, next) => {
           { userId: member._id, email: email, roleCode: campaignManagerCode },
           JWTKEY,
           {
-            expiresIn: "1h",
+            expiresIn: "23h",
           }
         );
       } catch (err) {
@@ -470,7 +470,7 @@ const login = async (req, res, next) => {
         roleCode: superAdminCode,
       },
       JWTKEY,
-      { expiresIn: "1h" }
+      { expiresIn: "23h" }
     );
   } catch (err) {
     res.json({

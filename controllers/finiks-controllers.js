@@ -3,6 +3,27 @@ const Finiks = require("../Models/Finiksdata");
 const excelToJson = require("convert-excel-to-json");
 const fs = require("fs");
 
+const getFiniksDataTotalCount = async (req, res) => {
+  try {
+    let count = 0;
+    count = await Finiks.countDocuments();
+    console.log("Number of documents in the collection:", count);
+    res.json({
+      success: true,
+      finiksDataTotal: count,
+      message: "Finiks Data found",
+    });
+    return;
+  } catch (err) {
+    console.error("Error counting documents:", err);
+    res.json({
+      success: false,
+      message: "Something went wrong , #Finikscountfailed",
+    });
+    return;
+  }
+};
+
 const getFiniksdata = async (req, res) => {
   const { bottomHit } = req.body;
   console.log(bottomHit);
@@ -199,4 +220,5 @@ module.exports = {
   getFiniksdata,
   //   addAristotleData,
   editVoter,
+  getFiniksDataTotalCount,
 };

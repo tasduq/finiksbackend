@@ -337,7 +337,7 @@ const login = async (req, res, next) => {
         roleCode: teamCode,
       },
       JWTKEY,
-      { expiresIn: "1h" }
+      { expiresIn: "23h" }
     );
   } catch (err) {
     res.json({
