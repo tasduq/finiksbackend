@@ -52,152 +52,161 @@ const editClient = async (req, res) => {
 
   let resolvedCampaignData;
 
-  if (dataBucketUpdated) {
-    let buildQuery = (state, level) => {
-      let query = {};
+  // if (dataBucketUpdated) {
+  //   let buildQuery = (state, level) => {
+  //     let query = {};
 
-      if (level === "Federal - Senate" || level === "State - Statewide") {
-        query = {
-          STATE: state,
-        };
-      }
+  //     if (level === "Federal - Senate" || level === "State - Statewide") {
+  //       query = {
+  //         STATE: state,
+  //       };
+  //     }
 
-      if (level === "Federal - House") {
-        query = {
-          STATE: state,
-          [campaignLevelMappedValues[level]]: { $in: district },
-        };
-      }
+  //     if (level === "Federal - House") {
+  //       query = {
+  //         STATE: state,
+  //         [campaignLevelMappedValues[level]]: { $in: district },
+  //       };
+  //     }
 
-      if (level === "State - Senate" || level === "State - House") {
-        query = {
-          STATE: state,
-          [campaignLevelMappedValues[level]]: { $in: district },
-        };
-      }
+  //     if (level === "State - Senate" || level === "State - House") {
+  //       query = {
+  //         STATE: state,
+  //         [campaignLevelMappedValues[level]]: { $in: district },
+  //       };
+  //     }
 
-      if (
-        level === "County - County Wide" ||
-        level === "County - County Commision"
-      ) {
-        query = {
-          STATE: state,
-          [campaignLevelMappedValues[level]]: { $in: countyCommission },
-        };
-      }
+  //     if (
+  //       level === "County - County Wide" ||
+  //       level === "County - County Commision"
+  //     ) {
+  //       query = {
+  //         STATE: state,
+  //         [campaignLevelMappedValues[level]]: { $in: countyCommission },
+  //       };
+  //     }
 
-      if (level === "City - City Wide") {
-        query = {
-          STATE: state,
-          [campaignLevelMappedValues[level]]: { $in: city },
-        };
-      }
+  //     if (level === "City - City Wide") {
+  //       query = {
+  //         STATE: state,
+  //         [campaignLevelMappedValues[level]]: { $in: city },
+  //       };
+  //     }
 
-      return query;
-    };
+  //     return query;
+  //   };
 
-    let foundQuery = buildQuery(state, level);
-    console.log(foundQuery, "i am final query");
+  //   let foundQuery = buildQuery(state, level);
+  //   console.log(foundQuery, "i am final query");
 
+  //   try {
+  //     let campaignData = Aristotle.aggregate([
+  //       {
+  //         $match: foundQuery,
+  //       },
+  //     ]);
+
+  //     resolvedCampaignData = await campaignData;
+
+  //     // Process the resolvedCampaignData here if successful.
+  //     // console.log("Aggregation result:", resolvedCampaignData);
+  //   } catch (error) {
+  //     // Handle the error here.
+  //     console.error("Error during aggregation:", error);
+  //     res.json({
+  //       success: false,
+  //       data: err,
+  //       message: "Something went wrong , Code: #databucketresultsfailed",
+  //     });
+  //     return;
+  //   }
+  //   console.log(resolvedCampaignData.length, "i am resolved");
+  // }
+
+  if (campaignName && state && level && startDate && endDate) {
     try {
-      let campaignData = Aristotle.aggregate([
+      let ad = Campaign.updateOne(
+        { _id: id },
+
         {
-          $match: foundQuery,
+          $set: {
+            campaignName,
+            // email,
+            startDate,
+            endDate,
+            election,
+            state,
+            level,
+            district,
+            active,
+            city,
+            county,
+            countyCommission,
+          },
         },
-      ]);
-
-      resolvedCampaignData = await campaignData;
-
-      // Process the resolvedCampaignData here if successful.
-      // console.log("Aggregation result:", resolvedCampaignData);
-    } catch (error) {
-      // Handle the error here.
-      console.error("Error during aggregation:", error);
-      res.json({
-        success: false,
-        data: err,
-        message: "Something went wrong , Code: #databucketresultsfailed",
-      });
-      return;
-    }
-    console.log(resolvedCampaignData.length, "i am resolved");
-  }
-
-  try {
-    let ad = Campaign.updateOne(
-      { _id: id },
-
-      {
-        $set: {
-          campaignName,
-          // email,
-          startDate,
-          endDate,
-          election,
-          state,
-          level,
-          district,
-          active,
-          city,
-          county,
-          countyCommission,
-        },
-      },
-      function (err) {
-        console.log(err);
-        if (err) {
-          res.json({
-            success: false,
-            message: "Something went wrong",
-          });
-          return;
-        } else {
-          if (dataBucketUpdated) {
-            let objectId = mongoose.Types.ObjectId(id);
-            console.log(objectId, "i am object id");
-            console.log(resolvedCampaignData.length, "i am resolved");
-            CampaignDataBucket.updateOne(
-              { campaignId: mongoose.Types.ObjectId(id) },
-              {
-                $set: {
-                  campaignData: resolvedCampaignData,
-                },
-              },
-              (err) => {
-                if (err) {
-                  res.json({
-                    success: false,
-                    message: "Something went wrong #databucketupdateerror",
-                  });
-                  return;
-                } else {
-                  console.log("=====> data bucket updated");
-                  res.json({
-                    success: true,
-                    message: "Client Data Updated",
-                  });
-                  return;
-                }
-              }
-            );
+        function (err) {
+          console.log(err);
+          if (err) {
+            res.json({
+              success: false,
+              message: "Something went wrong code: #updationgcampaignfailed",
+            });
+            return;
           } else {
+            // if (dataBucketUpdated) {
+            //   let objectId = mongoose.Types.ObjectId(id);
+            //   console.log(objectId, "i am object id");
+            //   console.log(resolvedCampaignData.length, "i am resolved");
+            //   CampaignDataBucket.updateOne(
+            //     { campaignId: mongoose.Types.ObjectId(id) },
+            //     {
+            //       $set: {
+            //         campaignData: resolvedCampaignData,
+            //       },
+            //     },
+            //     (err) => {
+            //       if (err) {
+            //         res.json({
+            //           success: false,
+            //           message: "Something went wrong #databucketupdateerror",
+            //         });
+            //         return;
+            //       } else {
+            //         console.log("=====> data bucket updated");
+            //         res.json({
+            //           success: true,
+            //           message: "Client Data Updated",
+            //         });
+            //         return;
+            //       }
+            //     }
+            //   );
+            // } else {
+
+            // }
             console.log("=====> data bucket updated outside");
             res.json({
               success: true,
-              message: "Client Data Updated",
+              message: "Campaign Data Updated",
             });
             return;
           }
         }
-      }
-    );
+      );
 
-    console.log("done");
-  } catch (err) {
-    console.log(err);
+      console.log("done");
+    } catch (err) {
+      console.log(err);
+      res.json({
+        success: false,
+        message: "Something went wrong",
+      });
+      return;
+    }
+  } else {
     res.json({
+      message: "Please Enter or select all the required fields",
       success: false,
-      message: "Something went wrong",
     });
     return;
   }
