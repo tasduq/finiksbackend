@@ -18,5 +18,10 @@ router.post(
   aristotleController.addAristotleData
 );
 router.post("/editvoter", verifyToken, aristotleController.editVoter);
+router.get(
+  "/getaristotletotalcount",
+  verifyToken,
+  aristotleController.getAristotleDataTotalCount
+);
 
 module.exports = router;

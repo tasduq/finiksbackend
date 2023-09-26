@@ -1,5 +1,7 @@
 const Campaign = require("../Models/Campaign");
 const Team = require("../Models/Teammember");
+const Aristotle = require("../Models/Aristotledata");
+const CampaignDataBucket = require("../Models/Campaigndatabucket");
 const bcrypt = require("bcryptjs");
 var otpGenerator = require("otp-generator");
 var sendEmail = require("../Utils/Sendemail");
@@ -8,11 +10,24 @@ const {
   superAdminCode,
   campaignManagerCode,
 } = require("../Config/config");
+const ImageProcessor = require("../Utils/Imageprocesor");
 
 const jwt = require("jsonwebtoken");
 
+const campaignLevelMappedValues = {
+  "Federal - Senate": "STATE",
+  "Federal - House": "CONG_DIST",
+  "State - Statewide": "STATE",
+  "State - Senate": "ST_UP_HOUS",
+  "State - House": "ST_LO_HOUS",
+  "County - County Wide": "CNTY_DIST",
+  "County - County Commision": "CNTY_DIST",
+  "City - City Wide": "MUNICIPALITY",
+};
+
 const register = async (req, res, next) => {
-  console.log(req.body);
+  console.log(req.body, "i am bucket data");
+  // return;
   let {
     campaignName,
     email,
@@ -31,7 +46,81 @@ const register = async (req, res, next) => {
   // console.log(req.body);
   email = email?.toLowerCase();
 
-  if (campaignName && email) {
+  if (campaignName && email && state && startDate && endDate) {
+    let buildQuery = (state, level) => {
+      let query = {
+        STATE: state,
+      };
+
+      if (level === "Federal - Senate" || level === "State - Statewide") {
+        query = {
+          STATE: state,
+        };
+      }
+
+      if (level === "Federal - House") {
+        query = {
+          STATE: state,
+          [campaignLevelMappedValues[level]]: { $in: district },
+        };
+      }
+
+      if (level === "State - Senate" || level === "State - House") {
+        query = {
+          STATE: state,
+          [campaignLevelMappedValues[level]]: { $in: district },
+        };
+      }
+
+      if (
+        level === "County - County Wide" ||
+        level === "County - County Commision"
+      ) {
+        query = {
+          STATE: state,
+          [campaignLevelMappedValues[level]]: { $in: countyCommission },
+        };
+      }
+
+      if (level === "City - City Wide") {
+        query = {
+          STATE: state,
+          [campaignLevelMappedValues[level]]: { $in: city },
+        };
+      }
+
+      return query;
+    };
+
+    let foundQuery = buildQuery(state, level);
+    console.log(foundQuery, "i am final query");
+
+    let resolvedCampaignData;
+
+    try {
+      let campaignData = Aristotle.aggregate([
+        {
+          $match: foundQuery,
+        },
+      ]);
+
+      resolvedCampaignData = await campaignData;
+
+      // Process the resolvedCampaignData here if successful.
+      console.log("Aggregation result:", resolvedCampaignData);
+    } catch (error) {
+      // Handle the error here.
+      console.error("Error during aggregation:", error);
+      res.json({
+        success: false,
+        data: err,
+        message: "Something went wrong , Code: #databucketresultsfailed",
+      });
+      return;
+    }
+    console.log(resolvedCampaignData.length, "i am resolved");
+    // return;
+
     let existingCampaign;
     try {
       existingCampaign = await Campaign.findOne({ campaignName: campaignName });
@@ -46,26 +135,27 @@ const register = async (req, res, next) => {
       res.json({
         success: false,
         data: err,
-        message: "Signing up failed, please try again later.",
-      });
-    }
-
-    let hashedPassword;
-    try {
-      hashedPassword = await bcrypt.hash(password, 12);
-    } catch (err) {
-      console.log(err);
-      console.log(
-        "Signing up failed as hashing failed, please try again later."
-      );
-
-      res.json({
-        success: false,
-        data: err,
-        message: "Signing up failed, please try again later.",
+        message: "Registering the campaign failed, please try again later.",
       });
       return;
     }
+
+    // let hashedPassword;
+    // try {
+    //   hashedPassword = await bcrypt.hash(password, 12);
+    // } catch (err) {
+    //   console.log(err);
+    //   console.log(
+    //     "Signing up failed as hashing failed, please try again later."
+    //   );
+
+    //   res.json({
+    //     success: false,
+    //     data: err,
+    //     message: "Signing up failed, please try again later.",
+    //   });
+    //   return;
+    // }
 
     let campaignCode = otpGenerator.generate(6, {
       upperCase: true,
@@ -97,7 +187,7 @@ const register = async (req, res, next) => {
           res.json({
             success: false,
             data: err,
-            message: "Signing up failed, please try again later.",
+            message: "Registering campaign Failed, please try again later.",
           });
           return;
         } else {
@@ -107,13 +197,9 @@ const register = async (req, res, next) => {
             email: email,
             campaignCode: "Your Campaign Got Registered at Finiks Platform",
             campaignName: campaignName,
-            heading: "Campaign Joining",
+            heading: "Campaign Registered",
             message: `We Have Registered Your Campaign at Finiks Platform. You can Login at  http://www.finiksapp.com/logins  and if you are not already part of the platform you can register here at http://www.finiksapp.com/team/register and your campaign joining code is ${campaignCode}`,
           });
-          // const campaignFound = await Campaign.findOne(
-          //   { _id: campaignId },
-          //   "invitedTeamMembers"
-          // );
 
           let yoo = doc?.invitedTeamMembers;
           console.log(yoo, "yoo1");
@@ -146,14 +232,29 @@ const register = async (req, res, next) => {
                   });
                   return;
                 } else {
-                  // res.json({
-                  //   success: true,
-                  //   message: "User Invited",
-                  // });
-                  // return;
-                  res.json({
-                    message: "Campaign Registered",
-                    success: true,
+                  //creating the daata bucket for the campaign
+                  console.log(doc._id, "i am id of campaign");
+                  let newDataBucketCreated = new CampaignDataBucket({
+                    campaignId: doc._id,
+                    campaignData: resolvedCampaignData,
+                  });
+                  newDataBucketCreated.save((err) => {
+                    if (err) {
+                      console.log(err);
+                      res.json({
+                        success: false,
+                        data: err,
+                        message:
+                          "Data bucket creation failed Code: #Databucketsavingfailed",
+                      });
+                      return;
+                    } else {
+                      res.json({
+                        message: "Campaign Registered suscessfully",
+                        success: true,
+                      });
+                      return;
+                    }
                   });
                 }
               }
@@ -180,7 +281,10 @@ const register = async (req, res, next) => {
       });
     }
   } else {
-    res.json({ message: "Please Enter all the Details", success: false });
+    res.json({
+      message: "Please Enter or select all the required fields",
+      success: false,
+    });
   }
 };
 
@@ -286,7 +390,7 @@ const login = async (req, res, next) => {
           { userId: member._id, email: email, roleCode: campaignManagerCode },
           JWTKEY,
           {
-            expiresIn: "1h",
+            expiresIn: "23h",
           }
         );
       } catch (err) {
@@ -366,7 +470,7 @@ const login = async (req, res, next) => {
         roleCode: superAdminCode,
       },
       JWTKEY,
-      { expiresIn: "1h" }
+      { expiresIn: "23h" }
     );
   } catch (err) {
     res.json({
@@ -404,15 +508,16 @@ const updateCampaignData = async (req, res) => {
   let { campaignDates, campaignLogo, campaignCode, campaignId } = req.body;
   // console.log(req.body);
   try {
-    // ad = await Ad.findOne({ _id: id });
-
+    // console.log(uploadImages, "yoooo ====>");
+    let imagesUploaded = await ImageProcessor.uploadImages([campaignLogo]);
+    console.log(imagesUploaded, "i am uploaded images of campaign logo");
     let ad = Campaign.updateOne(
       { _id: campaignId },
 
       {
         $set: {
           campaignDates,
-          campaignLogo,
+          campaignLogo: imagesUploaded[0],
           campaignCode,
         },
       },
@@ -457,6 +562,9 @@ const updateProfile = async (req, res) => {
   } = req.body;
   // console.log(req.body);
 
+  let imagesUploaded = await ImageProcessor.uploadImages([campaignLogo]);
+  console.log(imagesUploaded, "i am uploaded images of campaign logo");
+
   if (teamLogin === "true") {
     try {
       // ad = await Ad.findOne({ _id: id });
@@ -470,8 +578,8 @@ const updateProfile = async (req, res) => {
             lastName,
             address,
             phoneNumber,
-            campaignLogo,
-            image: campaignLogo,
+            campaignLogo: imagesUploaded[0],
+            image: imagesUploaded[0],
           },
         },
         function (err) {
@@ -514,7 +622,7 @@ const updateProfile = async (req, res) => {
             lastName,
             address,
             phoneNumber,
-            campaignLogo,
+            campaignLogo: imagesUploaded[0],
           },
         },
         function (err) {

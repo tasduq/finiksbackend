@@ -44,7 +44,9 @@ function verifyToken(req, res, next) {
     }
   } catch (err) {
     // console.log("error block", err);
-    return res.json({ message: "Invalid token.", success: false });
+    return res
+      .status(401)
+      .json({ message: "Invalid token. Login Again", success: false });
   }
 }
 

@@ -3,6 +3,27 @@ const Finiks = require("../Models/Finiksdata");
 const excelToJson = require("convert-excel-to-json");
 const fs = require("fs");
 
+const getAristotleDataTotalCount = async (req, res) => {
+  try {
+    let count = 0;
+    count = await Aristotle.countDocuments();
+    console.log("Number of documents in the collection:", count);
+    res.json({
+      success: true,
+      aristotleDataTotal: count,
+      message: "Aristotle Data found",
+    });
+    return;
+  } catch (err) {
+    console.error("Error counting documents:", err);
+    res.json({
+      success: false,
+      message: "Something went wrong , #aristotlecountfailed",
+    });
+    return;
+  }
+};
+
 const getAristotledata = async (req, res) => {
   const { bottomHit } = req.body;
   console.log(bottomHit);
@@ -21,7 +42,7 @@ const getAristotledata = async (req, res) => {
     return;
   } else {
     res.json({
-      success: true,
+      success: false,
       message: "Aristotle Data Not found",
     });
     return;
@@ -141,16 +162,26 @@ const addAristotleData = async (req, res) => {
     },
   });
 
-  console.log(result);
-  if (!result.sheet1) {
-    console.log("Convert Sheet name to sheet1");
-    res.json({ succes: false, message: "Convert Sheet name to sheet1" });
+  console.log(result, "i am result");
+
+  if (!result.sheet1 && !result.Sheet1) {
+    console.log("Convert Sheet name to sheet1 or Sheet1");
+    res.json({
+      succes: false,
+      message: "Convert Sheet name to sheet1 or Sheet1",
+    });
     return;
   }
-  let saveVoter = [...result.sheet1];
+  let saveVoter = [];
+  if (result.sheet1) {
+    saveVoter = [...result.sheet1];
+  } else {
+    saveVoter = [...result.Sheet1];
+  }
   saveVoter.splice(0, 1);
   // console.log(saveVoter);
   // filter = { 'API_ID'}
+
   saveVoter.map(async (voter) => {
     Aristotle.collection.updateOne(
       { API_ID: voter.API_ID },
@@ -227,4 +258,5 @@ module.exports = {
   getAristotledata,
   addAristotleData,
   editVoter,
+  getAristotleDataTotalCount,
 };

@@ -747,7 +747,9 @@ const searchVoter = async (req, res) => {
 
     if (firstName && lastName) {
       // console.log(pipeLineFunc("FULLNAME"), "i am pipeline of fullname");
-      let results = Aristotle.collection.aggregate(pipeLineFunc("FULLNAME"));
+      let results = await Aristotle.collection.aggregate(
+        pipeLineFunc("FULLNAME")
+      );
 
       await results.forEach((voter) => {
         voters.push(voter);
@@ -756,7 +758,9 @@ const searchVoter = async (req, res) => {
       foundVoters = voters;
       console.log(foundVoters, "foundvoters results");
     } else {
-      const results = Aristotle.collection.aggregate(pipeLineFunc("FIRSTNAME"));
+      const results = await Aristotle.collection.aggregate(
+        pipeLineFunc("FIRSTNAME")
+      );
       console.log(results, "i am results");
 
       await results.forEach((voter) => {
@@ -767,7 +771,7 @@ const searchVoter = async (req, res) => {
       console.log(foundVoters, "foundvoters results");
 
       if (foundVoters?.length === 0) {
-        const results = Aristotle.collection.aggregate(
+        const results = await Aristotle.collection.aggregate(
           pipeLineFunc("LASTNAME")
         );
         console.log(results, "i am results");
