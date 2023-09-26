@@ -162,7 +162,7 @@ const addAristotleData = async (req, res) => {
     },
   });
 
-  console.log(result, "i am result");
+  // console.log(result, "i am result");
 
   if (!result.sheet1 && !result.Sheet1) {
     console.log("Convert Sheet name to sheet1 or Sheet1");
