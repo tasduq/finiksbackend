@@ -46,79 +46,79 @@ const register = async (req, res, next) => {
   // console.log(req.body);
   email = email?.toLowerCase();
 
-  if (campaignName && email && state && startDate && endDate) {
-    let buildQuery = (state, level) => {
-      let query = {
-        STATE: state,
-      };
+  if (campaignName && email && state && level && startDate && endDate) {
+    // let buildQuery = (state, level) => {
+    //   let query = {
+    //     STATE: state,
+    //   };
 
-      if (level === "Federal - Senate" || level === "State - Statewide") {
-        query = {
-          STATE: state,
-        };
-      }
+    //   if (level === "Federal - Senate" || level === "State - Statewide") {
+    //     query = {
+    //       STATE: state,
+    //     };
+    //   }
 
-      if (level === "Federal - House") {
-        query = {
-          STATE: state,
-          [campaignLevelMappedValues[level]]: { $in: district },
-        };
-      }
+    //   if (level === "Federal - House") {
+    //     query = {
+    //       STATE: state,
+    //       [campaignLevelMappedValues[level]]: { $in: district },
+    //     };
+    //   }
 
-      if (level === "State - Senate" || level === "State - House") {
-        query = {
-          STATE: state,
-          [campaignLevelMappedValues[level]]: { $in: district },
-        };
-      }
+    //   if (level === "State - Senate" || level === "State - House") {
+    //     query = {
+    //       STATE: state,
+    //       [campaignLevelMappedValues[level]]: { $in: district },
+    //     };
+    //   }
 
-      if (
-        level === "County - County Wide" ||
-        level === "County - County Commision"
-      ) {
-        query = {
-          STATE: state,
-          [campaignLevelMappedValues[level]]: { $in: countyCommission },
-        };
-      }
+    //   if (
+    //     level === "County - County Wide" ||
+    //     level === "County - County Commision"
+    //   ) {
+    //     query = {
+    //       STATE: state,
+    //       [campaignLevelMappedValues[level]]: { $in: countyCommission },
+    //     };
+    //   }
 
-      if (level === "City - City Wide") {
-        query = {
-          STATE: state,
-          [campaignLevelMappedValues[level]]: { $in: city },
-        };
-      }
+    //   if (level === "City - City Wide") {
+    //     query = {
+    //       STATE: state,
+    //       [campaignLevelMappedValues[level]]: { $in: city },
+    //     };
+    //   }
 
-      return query;
-    };
+    //   return query;
+    // };
 
-    let foundQuery = buildQuery(state, level);
-    console.log(foundQuery, "i am final query");
+    // let foundQuery = buildQuery(state, level);
+    // console.log(foundQuery, "i am final query");
 
-    let resolvedCampaignData;
+    // let resolvedCampaignData;
 
-    try {
-      let campaignData = Aristotle.aggregate([
-        {
-          $match: foundQuery,
-        },
-      ]);
+    // try {
+    //   let campaignData = Aristotle.aggregate([
+    //     {
+    //       $match: foundQuery,
+    //     },
+    //   ]);
 
-      resolvedCampaignData = await campaignData;
+    //   resolvedCampaignData = await campaignData;
 
-      // Process the resolvedCampaignData here if successful.
-      console.log("Aggregation result:", resolvedCampaignData);
-    } catch (error) {
-      // Handle the error here.
-      console.error("Error during aggregation:", error);
-      res.json({
-        success: false,
-        data: err,
-        message: "Something went wrong , Code: #databucketresultsfailed",
-      });
-      return;
-    }
-    console.log(resolvedCampaignData.length, "i am resolved");
+    //   // Process the resolvedCampaignData here if successful.
+    //   console.log("Aggregation result:", resolvedCampaignData);
+    // } catch (error) {
+    //   // Handle the error here.
+    //   console.error("Error during aggregation:", error);
+    //   res.json({
+    //     success: false,
+    //     data: err,
+    //     message: "Something went wrong , Code: #databucketresultsfailed",
+    //   });
+    //   return;
+    // }
+    // console.log(resolvedCampaignData.length, "i am resolved");
     // return;
 
     let existingCampaign;
@@ -139,23 +139,6 @@ const register = async (req, res, next) => {
       });
       return;
     }
-
-    // let hashedPassword;
-    // try {
-    //   hashedPassword = await bcrypt.hash(password, 12);
-    // } catch (err) {
-    //   console.log(err);
-    //   console.log(
-    //     "Signing up failed as hashing failed, please try again later."
-    //   );
-
-    //   res.json({
-    //     success: false,
-    //     data: err,
-    //     message: "Signing up failed, please try again later.",
-    //   });
-    //   return;
-    // }
 
     let campaignCode = otpGenerator.generate(6, {
       upperCase: true,
@@ -228,34 +211,37 @@ const register = async (req, res, next) => {
                 if (err) {
                   res.json({
                     success: false,
-                    message: "Something went wrong",
+                    message:
+                      "Something went wrong Code: #inviteteammemberfailed",
                   });
                   return;
                 } else {
                   //creating the daata bucket for the campaign
-                  console.log(doc._id, "i am id of campaign");
-                  let newDataBucketCreated = new CampaignDataBucket({
-                    campaignId: doc._id,
-                    campaignData: resolvedCampaignData,
+                  // console.log(doc._id, "i am id of campaign");
+                  // let newDataBucketCreated = new CampaignDataBucket({
+                  //   campaignId: doc._id,
+                  //   campaignData: resolvedCampaignData,
+                  // });
+                  // newDataBucketCreated.save((err) => {
+                  //   if (err) {
+                  //     console.log(err);
+                  //     res.json({
+                  //       success: false,
+                  //       data: err,
+                  //       message:
+                  //         "Data bucket creation failed Code: #Databucketsavingfailed",
+                  //     });
+                  //     return;
+                  //   } else {
+
+                  //   }
+
+                  // });
+                  res.json({
+                    message: "Campaign Registered suscessfully",
+                    success: true,
                   });
-                  newDataBucketCreated.save((err) => {
-                    if (err) {
-                      console.log(err);
-                      res.json({
-                        success: false,
-                        data: err,
-                        message:
-                          "Data bucket creation failed Code: #Databucketsavingfailed",
-                      });
-                      return;
-                    } else {
-                      res.json({
-                        message: "Campaign Registered suscessfully",
-                        success: true,
-                      });
-                      return;
-                    }
-                  });
+                  return;
                 }
               }
             );
@@ -265,7 +251,7 @@ const register = async (req, res, next) => {
             console.log(err);
             res.json({
               success: false,
-              message: "Something went wrong",
+              message: "Something went wrong Code:#emailsendingfailed",
             });
             return;
           }
@@ -285,6 +271,7 @@ const register = async (req, res, next) => {
       message: "Please Enter or select all the required fields",
       success: false,
     });
+    return;
   }
 };
 

@@ -153,6 +153,7 @@ const addAristotleData = async (req, res) => {
   }
 };
 
+// trying to create optimized version
 const addAristotleData2 = async (req, res) => {
   console.log(req.file, "i am file");
   const fileStream = Readable.from([req.file.buffer]); // Assuming req.file.buffer is a Readable stream
