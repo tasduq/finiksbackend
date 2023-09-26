@@ -162,7 +162,7 @@ const addAristotleData = async (req, res) => {
     },
   });
 
-  console.log(result, "i am result");
+  // console.log(result, "i am result");
 
   if (!result.sheet1 && !result.Sheet1) {
     console.log("Convert Sheet name to sheet1 or Sheet1");
@@ -182,47 +182,74 @@ const addAristotleData = async (req, res) => {
   // console.log(saveVoter);
   // filter = { 'API_ID'}
 
-  saveVoter.map(async (voter) => {
-    Aristotle.collection.updateOne(
-      { API_ID: voter.API_ID },
-      { $set: { ...voter } },
-      { upsert: true },
-      async function (err, docs) {
-        if (err) {
-          console.log(err);
-          res.json({ success: false, message: "Error in saving Data" });
-          return;
-        } else {
-          console.log("Multiple documents inserted to Aristotle Collection");
-          await Finiks.collection.updateOne(
-            { API_ID: voter.API_ID },
-            { $set: { ...voter } },
-            { upsert: true }
-            // (err, docs) => {
-            //   if (err) {
-            //     console.log(err, "i am error");
-            //     res.json({ success: false, message: "Error in saving Data" });
-            //     return;
-            //   } else {
-            //     return res.json({
-            //       success: true,
-            //       message: "Aristotle Data and Finiks Data Saved",
-            //     });
-            //   }
-            // }
-          );
+  // saveVoter.map(async (voter) => {
+  //   Aristotle.collection.updateOne(
+  //     { API_ID: voter.API_ID },
+  //     { $set: { ...voter } },
+  //     { upsert: true },
+  //     async function (err, docs) {
+  //       if (err) {
+  //         console.log(err);
+  //         res.json({ success: false, message: "Error in saving Data" });
+  //         return;
+  //       } else {
+  //         console.log("Multiple documents inserted to Aristotle Collection");
+  //         await Finiks.collection.updateOne(
+  //           { API_ID: voter.API_ID },
+  //           { $set: { ...voter } },
+  //           { upsert: true }
+  //         );
 
-          if (!res.headersSent) {
-            res.json({
-              success: true,
-              message: "Aristotle Data and Finiks Data Saved",
-            });
-            return;
-          }
-        }
-      }
-    );
-  });
+  //         if (!res.headersSent) {
+  //           res.json({
+  //             success: true,
+  //             message: "Aristotle Data and Finiks Data Saved",
+  //           });
+  //           return;
+  //         }
+  //       }
+  //     }
+  //   );
+  // });
+
+  try {
+    const saveVoterPromises = saveVoter.map(async (voter, i) => {
+      console.log("Adding multiple documents to DB", i);
+      await Aristotle.collection.updateOne(
+        { API_ID: voter.API_ID },
+        { $set: { ...voter } },
+        { upsert: true }
+      );
+
+      await Finiks.collection.updateOne(
+        { API_ID: voter.API_ID },
+        { $set: { ...voter } },
+        { upsert: true }
+      );
+    });
+
+    // Wait for all updateOne operations to complete
+    await Promise.all(saveVoterPromises);
+
+    // Respond with success message
+    res.json({
+      success: true,
+      message: "Aristotle Data and Finiks Data Saved",
+    });
+  } catch (error) {
+    // Handle errors and send an appropriate error response
+    console.error("Error in saving data:", error);
+
+    // You can also log the error for debugging purposes
+
+    // Send an error response to the frontend
+    res.json({
+      success: false,
+      message: "Something went wrong #savingvoterstodbcrashed",
+    });
+
+    // Pass the error to the next middleware (e.g., for global error handling)
+  }
 };
 
 const editVoter = async (req, res) => {
