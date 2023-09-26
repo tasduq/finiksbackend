@@ -50,7 +50,7 @@ app.use("/api/settings", settings);
 
 // let db;
 mongoose
-  .connect(dbStage, {
+  .connect(dbProd, {
     useNewUrlParser: true,
     //   useCreateIndex: true,
     useUnifiedTopology: true,
