@@ -79,13 +79,23 @@ const queryData = async (req, res) => {
                 lte: filters.ZIP.to, // TO
               },
             },
-            filters.PREC_NO1 && {
-              range: {
-                path: "PREC_NO1",
-                gte: filters.PREC_NO1.from, // From
-                lte: filters.PREC_NO1.to, // TO
-              },
-            },
+
+            filters.PREC_NO1
+              ? typeof filters.PREC_NO1.from === "number"
+                ? {
+                    range: {
+                      path: "PREC_NO1",
+                      gte: filters.PREC_NO1.from, // From
+                      lte: filters.PREC_NO1.from, // TO
+                    },
+                  }
+                : {
+                    text: {
+                      query: filters.PREC_NO1.from,
+                      path: "PREC_NO1",
+                    },
+                  }
+              : undefined,
             filters.CONG_DIST && {
               range: {
                 path: "CONG_DIST",
@@ -97,9 +107,10 @@ const queryData = async (req, res) => {
               range: {
                 path: "ST_UP_HOUS",
                 gte: filters.ST_UP_HOUS.from, // From
-                lte: filters.ST_UP_HOUS.to, // TO
+                lte: filters.ST_UP_HOUS.to, // Exact match on "from" value
               },
             },
+
             filters.ST_LO_HOUS && {
               range: {
                 path: "ST_LO_HOUS",
@@ -187,7 +198,7 @@ const queryData = async (req, res) => {
   console.log(yoo);
 
   pipeLine[0].$search.compound.filter = yoo;
-  console.log(pipeLine);
+  console.log(JSON.stringify(pipeLine));
 
   const results = Aristotle.collection.aggregate(pipeLine);
   let count = 0;
