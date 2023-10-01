@@ -249,12 +249,60 @@ const deleteClient = async (req, res) => {
 const getDistricts = async (req, res) => {
   console.log(req.body);
 
-  const data = await Aristotle.distinct(req.body.field, {
-    [req.body.fieldTwoName ? req.body.fieldTwoName : "STATE"]: req.body.state,
-  });
-  console.log(data);
+  // const data = await Aristotle.distinct(req.body.field, {
+  //   STATE: "CA",
+  // });
+  // console.log(data, "i am data");
+
+  async function fetchData() {
+    try {
+      const distinctCities = await Aristotle.aggregate([
+        {
+          $match: {
+            [req.body.fieldTwoName ? req.body.fieldTwoName : "STATE"]: {
+              $in: Array.isArray(req.body.state)
+                ? req.body.state
+                : [req.body.state],
+            },
+          }, // Match documents with the specified state
+        },
+        {
+          $group: {
+            _id: `$${req.body.field}`, // Group by the specified field
+          },
+        },
+        {
+          $project: {
+            _id: 0, // Exclude the _id field from the result
+            [req.body.field]: "$_id", // Rename _id to the specified field
+          },
+        },
+      ]).exec();
+
+      const distinctCityValues = distinctCities
+        .filter((cityObject) => {
+          if (cityObject[req.body.field]) {
+            return cityObject[req.body.field];
+          }
+        })
+        .map((val) => val[req.body.field]);
+
+      console.log(`Distinct ${req?.body?.field} Values:`, distinctCityValues);
+
+      // Assign the result to the data variable or return it
+      return distinctCityValues;
+    } catch (err) {
+      // Handle errors
+      console.error(err);
+      throw err; // Throw the error to be handled by the caller
+    }
+  }
+
+  // Call the fetchData function to get the result
+  const data = await fetchData();
 
   if (data) {
+    console.log("sending res ====>");
     res.json({ success: true, message: "Districts found", districts: data });
   } else {
     res.json({ success: false, message: "Districts not found" });

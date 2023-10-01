@@ -496,8 +496,12 @@ const updateCampaignData = async (req, res) => {
   // console.log(req.body);
   try {
     // console.log(uploadImages, "yoooo ====>");
-    let imagesUploaded = await ImageProcessor.uploadImages([campaignLogo]);
-    console.log(imagesUploaded, "i am uploaded images of campaign logo");
+    let imagesUploaded = [""];
+    if (campaignLogo?.length > 0) {
+      imagesUploaded = await ImageProcessor.uploadImages([campaignLogo]);
+      console.log(imagesUploaded, "i am uploaded images of campaign logo");
+    }
+
     let ad = Campaign.updateOne(
       { _id: campaignId },
 
@@ -690,9 +694,15 @@ const getCampaignData = async (req, res) => {
               lastDateRegister: "",
               voteEarlyDate: "",
             },
+        campaignExtraData: campaignData,
       },
     });
     return;
+  } else {
+    res.json({
+      success: false,
+      message: "No Data Found for Campaign",
+    });
   }
 };
 

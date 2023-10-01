@@ -585,6 +585,7 @@ const searchVoter = async (req, res) => {
   const filters = req.body?.filters;
   // const fullName = new RegExp(`.*${name.split(" ").join(".*")}.*`, "i");
   // console.log("i am fullname", fullName);
+  // return;
 
   try {
     let foundVoters = [];
@@ -596,69 +597,137 @@ const searchVoter = async (req, res) => {
         let [firstName, lastName] = filters.FIRSTNAME.split(" ");
         console.log(firstName, lastName, "i am fullname ====>");
 
+        // pipeLine = [
+        //   {
+        //     $match: {
+        //       $expr: {
+        //         $and: [
+        //           {
+        //             $regexMatch: {
+        //               input: "$FIRSTNAME",
+        //               regex: new RegExp(firstName, "i"),
+        //             },
+        //           },
+        //           {
+        //             $regexMatch: {
+        //               input: "$LASTNAME",
+        //               regex: new RegExp(lastName, "i"),
+        //             },
+        //           },
+        //           filters.ADDRESS && {
+        //             $cond: {
+        //               if: filters.ADDRESS,
+        //               then: {
+        //                 $regexMatch: {
+        //                   input: "$ADDRESS",
+        //                   regex: new RegExp(filters.ADDRESS, "i"),
+        //                 },
+        //               },
+        //               else: true,
+        //             },
+        //           },
+        //           filters.STATE && {
+        //             $cond: {
+        //               if: filters.STATE,
+        //               then: {
+        //                 $regexMatch: {
+        //                   input: "$STATE",
+        //                   regex: new RegExp(filters.STATE, "i"),
+        //                 },
+        //               },
+        //               else: true,
+        //             },
+        //           },
+        //           filters.CITY && {
+        //             $cond: {
+        //               if: filters.CITY,
+        //               then: {
+        //                 $regexMatch: {
+        //                   input: "$CITY",
+        //                   regex: new RegExp(filters.CITY, "i"),
+        //                 },
+        //               },
+        //               else: true,
+        //             },
+        //           },
+        //           filters.AI_COUNTY_NAME && {
+        //             $cond: {
+        //               if: filters.AI_COUNTY_NAME,
+        //               then: {
+        //                 $regexMatch: {
+        //                   input: "$AI_COUNTY_NAME",
+        //                   regex: new RegExp(filters.AI_COUNTY_NAME, "i"),
+        //                 },
+        //               },
+        //               else: true,
+        //             },
+        //           },
+        //         ],
+        //       },
+        //     },
+        //   },
+        // ];
+        // console.log(pipeLine[0], "i am pure pipeline");
+
+        // const yoo = pipeLine[0].$match.$expr.$and.filter((subFilter) => {
+        //   // console.log(subFilter);
+        //   return subFilter !== undefined;
+        // });
+        // console.log(yoo);
+
+        // pipeLine[0].$match.$expr.$and = yoo;
+        // console.log(pipeLine[0].$match.$expr.$and, "i am pipe");
+
         pipeLine = [
           {
-            $match: {
-              $expr: {
-                $and: [
-                  {
-                    $regexMatch: {
-                      input: "$FIRSTNAME",
-                      regex: new RegExp(firstName, "i"),
+            $search: {
+              compound: {
+                filter: [
+                  firstName && {
+                    text: {
+                      query: firstName,
+                      path: "FIRSTNAME",
                     },
                   },
-                  {
-                    $regexMatch: {
-                      input: "$LASTNAME",
-                      regex: new RegExp(lastName, "i"),
-                    },
-                  },
-                  filters.ADDRESS && {
-                    $cond: {
-                      if: filters.ADDRESS,
-                      then: {
-                        $regexMatch: {
-                          input: "$ADDRESS",
-                          regex: new RegExp(filters.ADDRESS, "i"),
-                        },
-                      },
-                      else: true,
+                  lastName && {
+                    text: {
+                      query: lastName,
+                      path: "LASTNAME",
                     },
                   },
                   filters.STATE && {
-                    $cond: {
-                      if: filters.STATE,
-                      then: {
-                        $regexMatch: {
-                          input: "$STATE",
-                          regex: new RegExp(filters.STATE, "i"),
-                        },
-                      },
-                      else: true,
+                    text: {
+                      query: filters.STATE,
+                      path: "STATE",
                     },
                   },
                   filters.CITY && {
-                    $cond: {
-                      if: filters.CITY,
-                      then: {
-                        $regexMatch: {
-                          input: "$CITY",
-                          regex: new RegExp(filters.CITY, "i"),
-                        },
-                      },
-                      else: true,
+                    text: {
+                      query: filters.CITY,
+                      path: "CITY",
                     },
                   },
                   filters.AI_COUNTY_NAME && {
-                    $cond: {
-                      if: filters.AI_COUNTY_NAME,
-                      then: {
-                        $regexMatch: {
-                          input: "$AI_COUNTY_NAME",
-                          regex: new RegExp(filters.AI_COUNTY_NAME, "i"),
-                        },
-                      },
-                      else: true,
+                    text: {
+                      query: filters.AI_COUNTY_NAME,
+                      path: "AI_COUNTY_NAME",
+                    },
+                  },
+                  filters.ADDRESS && {
+                    text: {
+                      query: filters.ADDRESS,
+                      path: "ADDRESS",
+                    },
+                  },
+                ],
+                must: filters.ADDRESS && [
+                  {
+                    text: {
+                      query: filters.ADDRESS,
+                      path: "ADDRESS",
+                      // fuzzy: {
+                      //   maxEdits: 0,
+                      // },
                     },
                   },
                 ],
@@ -667,15 +736,13 @@ const searchVoter = async (req, res) => {
           },
         ];
         console.log(pipeLine[0], "i am pure pipeline");
-
-        const yoo = pipeLine[0].$match.$expr.$and.filter((subFilter) => {
+        const yoo = pipeLine[0].$search.compound.filter.filter((subFilter) => {
           // console.log(subFilter);
           return subFilter !== undefined;
         });
         console.log(yoo);
-
-        pipeLine[0].$match.$expr.$and = yoo;
-        console.log(pipeLine[0].$match.$expr.$and, "i am pipe");
+        pipeLine[0].$search.compound.filter = yoo;
+        console.log(pipeLine[0].$search.compound.filter, "i am pipe");
       } else {
         pipeLine = [
           {
@@ -746,7 +813,7 @@ const searchVoter = async (req, res) => {
     const [firstName, lastName] = filters?.FIRSTNAME?.split(" ");
 
     if (firstName && lastName) {
-      // console.log(pipeLineFunc("FULLNAME"), "i am pipeline of fullname");
+      console.log(pipeLineFunc("FULLNAME"), "i am pipeline of fullname");
       let results = await Aristotle.collection.aggregate(
         pipeLineFunc("FULLNAME")
       );
@@ -756,7 +823,7 @@ const searchVoter = async (req, res) => {
       });
 
       foundVoters = voters;
-      console.log(foundVoters, "foundvoters results");
+      // console.log(foundVoters, "foundvoters results");
     } else {
       const results = await Aristotle.collection.aggregate(
         pipeLineFunc("FIRSTNAME")
@@ -768,7 +835,7 @@ const searchVoter = async (req, res) => {
       });
 
       foundVoters = voters;
-      console.log(foundVoters, "foundvoters results");
+      // console.log(foundVoters, "foundvoters results");
 
       if (foundVoters?.length === 0) {
         const results = await Aristotle.collection.aggregate(
@@ -781,7 +848,7 @@ const searchVoter = async (req, res) => {
         });
 
         foundVoters = voters;
-        console.log(foundVoters, "foundvoters results");
+        // console.log(foundVoters, "foundvoters results");
       }
     }
 
@@ -804,7 +871,7 @@ const searchVoter = async (req, res) => {
             );
           }
         );
-        console.log(alreadyCanvassed, "alreadyCanvassed");
+        // console.log(alreadyCanvassed, "alreadyCanvassed");
         if (alreadyCanvassed) {
           return {
             ...voter,
