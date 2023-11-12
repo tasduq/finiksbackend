@@ -6,12 +6,14 @@ const Script = require("../Models/Script");
 const Tags = require("../Models/Tag");
 const Survey = require("../Models/Survey");
 const Finiks = require("../Models/Finiksdata");
+const Canvassedvotersbycampaign = require("../Models/Canvassedvotersbycampaigns");
 const bcrypt = require("bcryptjs");
 var otpGenerator = require("otp-generator");
 var sendEmail = require("../Utils/Sendemail");
 const jwt = require("jsonwebtoken");
 const { consumers } = require("nodemailer/lib/xoauth2");
 const { JWTKEY, teamCode } = require("../Config/config");
+const Aristotledata = require("../Models/Aristotledata");
 
 const register = async (req, res, next) => {
   let { firstName, lastName, email, password, address, phoneNumber } = req.body;
@@ -1266,6 +1268,76 @@ const updateVoterInfo = async (req, res) => {
   );
 };
 
+const updateVoterInfoFromCanvassingSinglePerson = async (req, res) => {
+  console.log(req.body);
+  let {
+    firstName,
+    lastName,
+    email,
+    phoneNumber,
+    mobileNumber,
+    address,
+    listId,
+    voterId,
+    campaignId,
+  } = req.body;
+  email = email?.toLowerCase();
+
+  Canvassedvotersbycampaign.updateOne(
+    {
+      campaignOwnerId: campaignId,
+      "surveyedVotersList._id": voterId,
+    },
+    {
+      $set: {
+        "voters.$.FIRSTNAME": firstName,
+        "voters.$.LASTNAME": lastName,
+        "voters.$.ADDRESS": address,
+        "voters.$.PHONE_NUM": phoneNumber,
+        "voters.$.MOBILE_NUM": mobileNumber,
+        "voters.$.EMAIL": email,
+      },
+    },
+    async (err) => {
+      if (err) {
+        console.log(err);
+        res.json({
+          success: false,
+          message: "Voter data updation failed",
+        });
+      } else {
+        Aristotledata.updateOne(
+          { _id: voterId },
+          {
+            $set: {
+              FIRSTNAME: firstName,
+              LASTNAME: lastName,
+              ADDRESS: address,
+              PHONE_NUM: phoneNumber,
+              MOBILE_NUM: mobileNumber,
+              EMAIL: email,
+            },
+          },
+          (err) => {
+            if (err) {
+              console.log(err);
+              res.json({
+                success: false,
+                message: "Voter data updation failed",
+              });
+            } else {
+              res.json({
+                success: true,
+                message: "Voter data updated",
+              });
+            }
+          }
+        );
+      }
+    }
+  );
+};
+
 module.exports = {
   register,
   login,
@@ -1288,4 +1360,5 @@ module.exports = {
   getInvitedVoters,
   getInvitedTeamMembers,
   cancelInvite,
+  updateVoterInfoFromCanvassingSinglePerson,
 };

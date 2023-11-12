@@ -873,6 +873,7 @@ const searchVoter = async (req, res) => {
         );
         // console.log(alreadyCanvassed, "alreadyCanvassed");
         if (alreadyCanvassed) {
+          console.log(alreadyCanvassed, "i am alreadycanvassed ====>");
           return {
             ...voter,
             tags: alreadyCanvassed?.voterTags?.map((tag) => {
@@ -890,6 +891,10 @@ const searchVoter = async (req, res) => {
             answeredSurveys: alreadyCanvassed?.surveyTaken?.map(
               (survey) => survey?.surveyId
             ),
+            // EMAIL: alreadyCanvassed?.EMAIL,
+            // MOBILE_NUM: alreadyCanvassed?.MOBILE_NUM,
+            // FIRSTNAME: alreadyCanvassed?.FIRSTNAME,
+            // PHONE_NUM: alreadyCanvassed?.PHONE_NUM,
           };
         } else {
           return voter;

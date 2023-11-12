@@ -49,6 +49,11 @@ router.post(
   verifyToken,
   teammemberController.updateVoterInfo
 );
+router.post(
+  "/updatevoterinfofromcanvassingsingleperson",
+  verifyToken,
+  teammemberController.updateVoterInfoFromCanvassingSinglePerson
+);
 router.post("/cancelinvite", verifyToken, teammemberController.cancelInvite);
 // router.post("/getcampaigns", teammemberController.getCampaigns);
 // router.post("/updatecampaigndata", campaignController.updateCampaignData);

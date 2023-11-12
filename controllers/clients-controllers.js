@@ -2,6 +2,7 @@ const Campaign = require("../Models/Campaign");
 const Aristotle = require("../Models/Aristotledata");
 const CampaignDataBucket = require("../Models/Campaigndatabucket");
 const mongoose = require("mongoose");
+const Sorter = require("../Utils/Sorter");
 
 const campaignLevelMappedValues = {
   "Federal - Senate": "STATE",
@@ -246,13 +247,22 @@ const deleteClient = async (req, res) => {
   }
 };
 
+// function customSort(arr) {
+//   let sortedVals = arr.sort((a, b) => {
+//     if (typeof a === "string" && typeof b === "string") {
+//       return a.localeCompare(b);
+//     } else if (typeof a === "number" && typeof b === "number") {
+//       return a - b;
+//     } else {
+//       return typeof a === "string" ? -1 : 1;
+//     }
+//   });
+//   console.log(sortedVals, "=====> sortedVals");
+//   return sortedVals;
+// }
+
 const getDistricts = async (req, res) => {
   console.log(req.body);
-
-  // const data = await Aristotle.distinct(req.body.field, {
-  //   STATE: "CA",
-  // });
-  // console.log(data, "i am data");
 
   async function fetchData() {
     try {
@@ -264,17 +274,17 @@ const getDistricts = async (req, res) => {
                 ? req.body.state
                 : [req.body.state],
             },
-          }, // Match documents with the specified state
+          },
         },
         {
           $group: {
-            _id: `$${req.body.field}`, // Group by the specified field
+            _id: `$${req.body.field}`,
           },
         },
         {
           $project: {
-            _id: 0, // Exclude the _id field from the result
-            [req.body.field]: "$_id", // Rename _id to the specified field
+            _id: 0,
+            [req.body.field]: "$_id",
           },
         },
       ]).exec();
@@ -290,22 +300,36 @@ const getDistricts = async (req, res) => {
       console.log(`Distinct ${req?.body?.field} Values:`, distinctCityValues);
 
       // Assign the result to the data variable or return it
-      return distinctCityValues;
+      if (req.body.field !== "PREC_NO1") {
+        let sortedDistrictValues = Sorter?.customSort(distinctCityValues);
+        return sortedDistrictValues;
+      } else {
+        return distinctCityValues;
+      }
     } catch (err) {
       // Handle errors
+
       console.error(err);
-      throw err; // Throw the error to be handled by the caller
+      throw err;
     }
   }
 
   // Call the fetchData function to get the result
-  const data = await fetchData();
+  try {
+    const data = await fetchData();
+    console.log(data, "====> districts data");
 
-  if (data) {
-    console.log("sending res ====>");
-    res.json({ success: true, message: "Districts found", districts: data });
-  } else {
+    if (data) {
+      console.log("sending res ====>");
+      res.json({ success: true, message: "Districts found", districts: data });
+      return;
+    } else {
+      res.json({ success: false, message: "Districts not found" });
+      return;
+    }
+  } catch (err) {
     res.json({ success: false, message: "Districts not found" });
+    return;
   }
 };
 
