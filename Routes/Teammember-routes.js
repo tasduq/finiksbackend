@@ -9,7 +9,7 @@ router.post("/registerteammember", teammemberController.register);
 router.post("/loginteammember", teammemberController.login);
 router.post("/inviteteammember", verifyToken, teammemberController.sendInvite);
 router.post("/editteammember", verifyToken, teammemberController.editMember);
-router.post("/joincampaign", verifyToken, teammemberController.joinCampaign);
+router.post("/joincampaign", teammemberController.joinCampaign);
 router.post(
   "/getjoinedcampaigns",
   verifyToken,

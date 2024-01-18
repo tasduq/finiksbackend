@@ -15,10 +15,10 @@ const rolesCode = {
 };
 
 function verifyToken(req, res, next) {
-  // console.log(req.header, req.headers, "i am headers");
-  const token = req.headers.authorization.split(" ")[2];
+  console.log(req?.headers, "i am headers");
+  const token = req?.headers?.authorization?.split(" ")[2];
   // console.log(token, secretKey, "i am token");
-  const role = req.headers.authorization.split(" ")[0];
+  const role = req?.headers?.authorization?.split(" ")[0];
   // console.log(role, "i a role");
   const roleCodeFound = rolesCode[role];
   // console.log(roleCodeFound, "i am rolecode found");
