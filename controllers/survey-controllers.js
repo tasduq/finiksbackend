@@ -455,9 +455,9 @@ const connectSurveyToUser = async (req, res) => {
               "surveys"
             );
             console.log(checkCampaignFound, "checkCampaignFound");
-            let checkCampaignFoundTest = checkCampaignFound.surveys.some(
+            let checkCampaignFoundTest = checkCampaignFound?.surveys.some(
               (campaign) => {
-                return campaign.campaignId === campaignId;
+                return campaign?.campaignId === campaignId;
               }
             );
             console.log(checkCampaignFoundTest, "checkCampaignFoundTest");
