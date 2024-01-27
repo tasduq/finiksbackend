@@ -13,6 +13,7 @@ const {
 const ImageProcessor = require("../Utils/Imageprocesor");
 
 const jwt = require("jsonwebtoken");
+const { isBase64 } = require("../Utils/CheckBase64");
 
 const campaignLevelMappedValues = {
   "Federal - Senate": "STATE",
@@ -551,9 +552,13 @@ const updateProfile = async (req, res) => {
     id,
     campaignLogo,
   } = req.body;
-  // console.log(req.body);
+  console.log(req.body);
 
-  let imagesUploaded = await ImageProcessor.uploadImages([campaignLogo]);
+  let imagesUploaded = [""];
+  console.log(isBase64(campaignLogo), "i am campaign logo ===>>>");
+  if (isBase64(campaignLogo)) {
+    imagesUploaded = await ImageProcessor.uploadImages([campaignLogo]);
+  }
   console.log(imagesUploaded, "i am uploaded images of campaign logo");
 
   if (teamLogin === "true") {

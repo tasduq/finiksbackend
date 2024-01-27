@@ -14,6 +14,7 @@ const jwt = require("jsonwebtoken");
 const { consumers } = require("nodemailer/lib/xoauth2");
 const { JWTKEY, teamCode } = require("../Config/config");
 const Aristotledata = require("../Models/Aristotledata");
+const mongoose = require("mongoose");
 
 const register = async (req, res, next) => {
   let { firstName, lastName, email, password, address, phoneNumber } = req.body;
@@ -1002,15 +1003,97 @@ const getTeamPhonebankRecords = async (req, res) => {
   }
 };
 
-const getList = async (req, res) => {
-  console.log(req.body);
+// const getList = async (req, res) => {
+//   console.log(req.body);
 
-  let list = await List.findOne({ _id: req.body.id });
-  console.log(list);
-  if (list) {
-    res.json({ success: true, list });
-  } else {
-    res.json({ success: false, message: "List not found" });
+//   let list = await List.findOne({ _id: req.body.id });
+//   console.log(list);
+//   if (list) {
+//     res.json({ success: true, list });
+//   } else {
+//     res.json({ success: false, message: "List not found" });
+//   }
+// };
+
+// const getList = async (req, res) => {
+//   console.log(req.body);
+
+//   const page = parseInt(req.query.page) || 1; // Default to page 1 if not specified
+//   const limit = parseInt(req.query.limit) || 10; // Default to 10 documents per page
+//   const skip = (page - 1) * limit;
+
+//   try {
+//     let list = await List.findOne({ _id: req.body.id });
+//     console.log(list);
+
+//     if (list) {
+//       // Assuming 'voters' is an array in your 'list' document
+//       const paginatedVoters = list.voters.slice(skip, skip + limit);
+//       console.log(paginatedVoters?.length, "i am pagionated ===>>>>");
+
+//       // Optionally, add more pagination details in the response
+//       const totalVoters = list.voters.length;
+//       const totalPages = Math.ceil(totalVoters / limit);
+
+//       res.json({
+//         success: true,
+//         list: {
+//           ...list.toObject(), // Convert the Mongoose document to a plain object
+//           voters: paginatedVoters, // Override voters with paginated result
+//         },
+//         pagination: {
+//           currentPage: page,
+//           totalPages,
+//           totalVoters,
+//         },
+//       });
+//     } else {
+//       res.json({ success: false, message: "List not found" });
+//     }
+//   } catch (error) {
+//     res.status(500).send(error.message);
+//   }
+// };
+
+const getList = async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  try {
+    let results = await List.aggregate([
+      { $match: { _id: mongoose.Types.ObjectId(req.body.id) } },
+      { $unwind: "$voters" },
+      { $skip: skip },
+      { $limit: limit },
+      { $group: { _id: "$_id", voters: { $push: "$voters" } } },
+    ]);
+
+    console.log(results, "i am results ===>>>");
+
+    if (results.length > 0) {
+      const totalVoters = await List.findOne({ _id: req.body.id }).then(
+        (doc) => doc.voters.length
+      );
+      const totalPages = Math.ceil(totalVoters / limit);
+
+      res.json({
+        success: true,
+        list: results[0],
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalVoters,
+        },
+      });
+    } else {
+      res.json({
+        success: false,
+        message: "List not found or no voters in the specified range",
+      });
+    }
+  } catch (error) {
+    res.status(500).send(error.message);
   }
 };
 
