@@ -13,6 +13,12 @@ const listSchema = new Schema({
   },
   campaignName: { type: String },
   voters: { type: Array, required: true },
+  pagination: {
+    currentPage: { type: Number },
+    totalVoters: { type: Number },
+    totalPages: { type: Number },
+  },
+  listDone: { type: Boolean, default: false },
 });
 
 module.exports = mongoose.model("List", listSchema);

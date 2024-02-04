@@ -10,6 +10,8 @@ const Phonebank = require("../Models/Phonebanklists");
 const Canvassingrecords = require("../Models/Canvassinglist");
 const CampaignCollection = require("../Models/Campaign");
 const { v4: uuidv4 } = require("uuid");
+const mongoose = require("mongoose");
+const { CalculatePagination } = require("../Utils/CalculatePagination");
 
 const addSurvey = async (req, res) => {
   console.log(req.body);
@@ -305,6 +307,34 @@ const connectSurveyToUser = async (req, res) => {
   } = req.body;
 
   let tagsWithDetails;
+
+  let currentVoterIndex = await List.aggregate([
+    {
+      $match: {
+        _id: mongoose.Types.ObjectId(list), // Ensure matching the specific list by _id
+      },
+    },
+    {
+      $project: {
+        voterIndex: {
+          $indexOfArray: [
+            {
+              $map: {
+                input: "$voters",
+                as: "voter",
+                in: { $toString: "$$voter._id" }, // Convert each _id to string for comparison
+              },
+            },
+            { $toString: mongoose.Types.ObjectId(voterId) }, // Convert the target _id to string as well
+          ],
+        },
+      },
+    },
+  ]);
+
+  console.log(currentVoterIndex, "i am currentVoterIndex ==>>>>");
+
+  const pagination = CalculatePagination(currentVoterIndex[0]?.voterIndex + 1);
 
   if (tags.length > 0) {
     tagsWithDetails = tags?.map((tag) => {
@@ -692,22 +722,38 @@ const connectSurveyToUser = async (req, res) => {
                                     //   "voterFound",
                                     //   tagsWithDetails
                                     // );
+
+                                    let listUpdateObject = {
+                                      $set: {
+                                        "voters.$.voterTags": [
+                                          ...voterFound?.voterTags,
+                                          ...tagsWithDetails,
+                                        ],
+                                        "voters.$.lastInfluenced": new Date(),
+                                        "voters.$.surveyed": true,
+                                        "voters.$.voterDone": true,
+                                      },
+                                    };
+
+                                    if (pagination?.isLastIndexVoter) {
+                                      listUpdateObject.$set[
+                                        "pagination.currentPage"
+                                      ] = pagination?.currentPage + 1;
+                                    }
+
+                                    if (
+                                      currentVoterIndex[0]?.voterIndex ===
+                                      listFound?.voters?.length - 1
+                                    ) {
+                                      listUpdateObject.$set["listDone"] = true;
+                                    }
+
                                     List.updateOne(
                                       {
                                         _id: list,
                                         "voters._id": voterId,
                                       },
-                                      {
-                                        $set: {
-                                          "voters.$.voterTags": [
-                                            ...voterFound?.voterTags,
-                                            ...tagsWithDetails,
-                                          ],
-                                          "voters.$.lastInfluenced": new Date(),
-                                          "voters.$.surveyed": true,
-                                          "voters.$.voterDone": true,
-                                        },
-                                      },
+                                      listUpdateObject,
                                       async (err) => {
                                         if (err) {
                                           console.log(err);
@@ -980,22 +1026,29 @@ const connectSurveyToUser = async (req, res) => {
                           //   tagsWithDetails
                           // );
 
+                          let listUpdateObject = {
+                            $set: {
+                              "voters.$.voterTags": [
+                                ...voterFound?.voterTags,
+                                ...tagsWithDetails,
+                              ],
+                              "voters.$.lastInfluenced": new Date(),
+                              "voters.$.surveyed": true,
+                              "voters.$.voterDone": true,
+                            },
+                          };
+
+                          if (pagination?.isLastIndexVoter) {
+                            listUpdateObject.$set["pagination.currentPage"] =
+                              pagination?.currentPage + 1;
+                          }
+
                           List.updateOne(
                             {
                               _id: list,
                               "voters._id": voterId,
                             },
-                            {
-                              $set: {
-                                "voters.$.voterTags": [
-                                  ...voterFound?.voterTags,
-                                  ...tagsWithDetails,
-                                ],
-                                "voters.$.lastInfluenced": new Date(),
-                                "voters.$.surveyed": true,
-                                "voters.$.voterDone": true,
-                              },
-                            },
+                            listUpdateObject,
                             async (err) => {
                               if (err) {
                                 console.log(err);

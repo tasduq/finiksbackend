@@ -242,6 +242,11 @@ const saveList = async (req, res, next) => {
     totalNumbers: voters.length,
     campaignOwnerId,
     voters: newVoters,
+    pagination: {
+      totalPages: Math.ceil(newVoters?.length / 10),
+      currentPage: 1,
+      totalVoters: newVoters?.length,
+    },
   });
 
   try {

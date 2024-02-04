@@ -1007,7 +1007,7 @@ const getTeamPhonebankRecords = async (req, res) => {
 //   console.log(req.body);
 
 //   let list = await List.findOne({ _id: req.body.id });
-//   console.log(list);
+//   // console.log(list);
 //   if (list) {
 //     res.json({ success: true, list });
 //   } else {
@@ -1056,11 +1056,20 @@ const getTeamPhonebankRecords = async (req, res) => {
 // };
 
 const getList = async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
-
   try {
+    let listPagination = await List.findOne({ _id: req.body.id }, [
+      "pagination",
+      "listDone",
+    ]);
+
+    console.log(listPagination, "i am listPagination ===>>>");
+
+    const page = listPagination?.pagination?.currentPage || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    console.log(page, "page", limit, "limit", skip, "skip", "===>>>>");
+
     let results = await List.aggregate([
       { $match: { _id: mongoose.Types.ObjectId(req.body.id) } },
       { $unwind: "$voters" },
@@ -1072,19 +1081,10 @@ const getList = async (req, res) => {
     console.log(results, "i am results ===>>>");
 
     if (results.length > 0) {
-      const totalVoters = await List.findOne({ _id: req.body.id }).then(
-        (doc) => doc.voters.length
-      );
-      const totalPages = Math.ceil(totalVoters / limit);
-
       res.json({
         success: true,
         list: results[0],
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalVoters,
-        },
+        listDone: listPagination?.listDone,
       });
     } else {
       res.json({
