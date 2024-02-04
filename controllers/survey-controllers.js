@@ -2232,18 +2232,63 @@ const saveInteraction = async (req, res) => {
   console.log(req.body);
   const { voterId, listId, interaction } = req.body;
 
+  let currentVoterIndex = await List.aggregate([
+    {
+      $match: {
+        _id: mongoose.Types.ObjectId(listId), // Ensure matching the specific list by _id
+      },
+    },
+    {
+      $project: {
+        voterIndex: {
+          $indexOfArray: [
+            {
+              $map: {
+                input: "$voters",
+                as: "voter",
+                in: { $toString: "$$voter._id" }, // Convert each _id to string for comparison
+              },
+            },
+            { $toString: mongoose.Types.ObjectId(voterId) }, // Convert the target _id to string as well
+          ],
+        },
+        votersCount: { $size: "$voters" },
+      },
+    },
+  ]);
+
+  console.log(currentVoterIndex, "i am currentVoterIndex ==>>>>");
+
+  const pagination = CalculatePagination(currentVoterIndex[0]?.voterIndex + 1);
+
+  let listUpdateObject = {
+    $set: {
+      "voters.$.interaction": interaction,
+      "voters.$.lastInfluenced": new Date(),
+      "voters.$.voterDone": true,
+    },
+  };
+
+  if (pagination?.isLastIndexVoter) {
+    listUpdateObject.$set["pagination.currentPage"] =
+      pagination?.currentPage + 1;
+  }
+
+  if (
+    currentVoterIndex[0]?.voterIndex ===
+    currentVoterIndex[0]?.votersCount - 1
+  ) {
+    listUpdateObject.$set["listDone"] = true;
+  }
+
+  console.log(listUpdateObject, "i am listUpdateObject", "===>>>>");
+
   List.updateOne(
     {
       _id: listId,
       "voters._id": voterId,
     },
-    {
-      $set: {
-        "voters.$.interaction": interaction,
-        "voters.$.lastInfluenced": new Date(),
-        "voters.$.voterDone": true,
-      },
-    },
+    listUpdateObject,
     async (err) => {
       if (err) {
         console.log(err);
@@ -2253,28 +2298,6 @@ const saveInteraction = async (req, res) => {
         });
         return;
       } else {
-        // List.updateOne(
-        //   {
-        //     _id: listId,
-        //   },
-        //   {
-        //     $pull: {
-        //       voters: { _id: voterId },
-        //     },
-        //   },
-        //   (err) => {
-        //     if (err) {
-        //       res.json({
-        //         success: false,
-        //         message: "Failed Saving Interaction",
-        //       });
-        //       return;
-        //     } else {
-        //       res.json({ success: true, message: "Interaction got Saved" });
-        //       return;
-        //     }
-        //   }
-        // );
         res.json({ success: true, message: "Interaction got Saved" });
         return;
       }
